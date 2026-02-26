@@ -414,3 +414,5 @@ YouTube is the growth engine — Mounir's portfolio review videos bridge educati
 - [Mounir — Finary AI announcement (LinkedIn)](https://www.linkedin.com/posts/mounirlaggoune_introducing-finary-ai-the-worlds-most-activity-7072094392307568640-vb4i)
 - [Affluent joining Finary](https://withaffluent.com/en/playbook/articles/affluent-is-joining-finary)
 - [No Cap Blog — Mounir](https://nocap.blog/founder/mounir-laggoune/)
+
+> [OG] I don't have much to say: this is a global overview, very informative. That's perfect as a reference. 

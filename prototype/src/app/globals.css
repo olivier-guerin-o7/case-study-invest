@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+/* ============================================
+   FINARY DESIGN TOKENS
+   Source: Visual Reference V3 (confirmed)
+   ============================================ */
+
+@theme inline {
+  /* === Backgrounds === */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0A0A0A;
+  --color-bg-surface: #1A1A2E;
+  --color-bg-elevated: #2A2A3E;
+  --color-bg-input: #1C1C2E;
+
+  /* === Text === */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #EDF0F5;
+  --color-text-muted: #8E8E93;
+  --color-text-tertiary: #7A7A80;
+
+  /* === Brand === */
+  --color-brand-blue: #5682F2;
+  --color-brand-gold: #F1C086;
+  --color-brand-gold-light: #FDBC71;
+  --color-brand-gold-warm: #F9D09F;
+  --color-brand-gold-dark: #EDB068;
+
+  /* === Status === */
+  --color-status-gain: #22C55E;
+  --color-status-loss: #EF4444;
+  --color-status-warning: #FBBF24;
+  --color-status-info: #5682F2;
+
+  /* === Borders === */
+  --color-border-subtle: #2A2A3E;
+  --color-border-active: #F1C086;
+  --color-border-muted: #333333;
+
+  /* === Typography === */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  /* === Spacing === */
+  --spacing-screen-x: 20px;
+  --spacing-section-y: 32px;
+  --spacing-card-inner: 16px;
+
+  /* === Border Radius === */
+  --radius-card: 12px;
+  --radius-card-lg: 16px;
+  --radius-button: 9999px;
+  --radius-badge: 9999px;
+  --radius-input: 12px;
+}
+
+/* === Base Styles === */
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === iPhone Frame Container === */
+.phone-frame {
+  width: 393px;
+  height: 852px;
+  overflow: hidden;
+  position: relative;
+  background: var(--color-bg-primary);
+}
+
+/* === Finary Gradient === */
+.gradient-brand {
+  background: linear-gradient(116deg, #5682F2 -36.05%, #F9D09F 100.05%);
+}
+
+.gradient-brand-text {
+  background: linear-gradient(116deg, #5682F2 -36.05%, #F9D09F 100.05%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === Celebration gradient (success screens) === */
+.gradient-celebration {
+  background: linear-gradient(180deg, #1A1A6E 0%, #0A0A2E 50%, #000000 100%);
+}
+
+/* === Ambient glow (subtle top-center glow on screens) === */
+.ambient-glow {
+  background: radial-gradient(ellipse at top center, rgba(86, 130, 242, 0.12) 0%, transparent 60%);
+}
+
+/* === Gold pill CTA === */
+.btn-primary {
+  background: var(--color-brand-gold);
+  color: #000000;
+  font-weight: 600;
+  border-radius: var(--radius-button);
+  padding: 14px 24px;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+.btn-primary:hover {
+  background: var(--color-brand-gold-dark);
+}
+
+/* === Secondary button === */
+.btn-secondary {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  border-radius: var(--radius-button);
+  padding: 14px 24px;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+/* === Safe area (bottom nav) === */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 34px);
+}
+
+/* === Scrollbar hidden (mobile feel) === */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ============================================
+   BLUEPRINT MODE (Tier 2 wireframes)
+   Toggle via data-blueprint attribute on body
+   ============================================ */
+[data-blueprint="true"] {
+  --color-bg-primary: #0A1628;
+  --color-bg-surface: transparent;
+  --color-bg-elevated: transparent;
+  --color-text-primary: #5682F2;
+  --color-text-secondary: #5682F2;
+  --color-text-muted: rgba(86, 130, 242, 0.5);
+  --color-border-subtle: #5682F2;
+  --color-brand-gold: transparent;
+}
+
+[data-blueprint="true"] * {
+  border-color: #5682F2 !important;
+}
+
+[data-blueprint="true"] .btn-primary {
+  background: transparent;
+  border: 1.5px solid #5682F2;
+  color: #5682F2;
+}
+
+[data-blueprint="true"] img,
+[data-blueprint="true"] svg {
+  opacity: 0.3;
+}

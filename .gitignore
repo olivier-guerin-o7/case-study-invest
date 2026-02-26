@@ -1,0 +1,11 @@
+# Obsidian
+.obsidian/
+
+# macOS
+.DS_Store
+
+# Claude Code
+.claude/
+
+# MCP config (local dev only)
+.mcp.json
