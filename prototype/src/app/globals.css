@@ -9,9 +9,15 @@
   /* === Backgrounds === */
   --color-bg-primary: #000000;
   --color-bg-secondary: #0A0A0A;
-  --color-bg-surface: #1A1A2E;
-  --color-bg-elevated: #2A2A3E;
-  --color-bg-input: #1C1C2E;
+  --color-bg-surface: #1A1A1C;
+  --color-bg-elevated: #2A2A2C;
+  --color-bg-input: #1C1C1E;
+
+  /* === Surfaces (warm white overlays — card hierarchy) === */
+  --color-surface-subtle: rgba(255, 255, 255, 0.06);
+  --color-surface-default: rgba(255, 255, 255, 0.08);
+  --color-surface-prominent: rgba(255, 255, 255, 0.10);
+  --color-surface-elevated: rgba(255, 255, 255, 0.14);
 
   /* === Text === */
   --color-text-primary: #FFFFFF;
@@ -33,7 +39,7 @@
   --color-status-info: #5682F2;
 
   /* === Borders === */
-  --color-border-subtle: #2A2A3E;
+  --color-border-subtle: #2A2A2C;
   --color-border-active: #F1C086;
   --color-border-muted: #333333;
 
@@ -109,7 +115,7 @@ body {
 
 /* === Secondary button === */
 .btn-secondary {
-  background: var(--color-bg-elevated);
+  background: var(--color-surface-prominent);
   color: var(--color-text-primary);
   font-weight: 500;
   border-radius: var(--radius-button);

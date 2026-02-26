@@ -9,12 +9,19 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Finary — First Investment Experience",
   description: "Case study prototype: brokerage account onboarding & first trade",
+  appleWebApp: {
+    capable: true,
+    title: "Finary",
+    statusBarStyle: "black-translucent",
+  },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#000000",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

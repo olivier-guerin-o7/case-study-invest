@@ -8,7 +8,7 @@ export default function TopBar() {
     <div className="flex items-center justify-between px-6 pt-1 pb-4">
       {/* Profile icon — outline person with bottom line, on translucent bg */}
       {/* 40px circle, 22px icon centered inside */}
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/8">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-prominent">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary/80">
           <circle cx="9" cy="5" r="2.8" />
           <path d="M3 14.5c0-2.8 2.7-5 6-5s6 2.2 6 5" />
