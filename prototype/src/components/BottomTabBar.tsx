@@ -2,6 +2,7 @@
 
 interface BottomTabBarProps {
   activeTab?: string;
+  onTabPress?: (tabId: string) => void;
 }
 
 const tabs = [
@@ -68,7 +69,7 @@ const tabs = [
   },
 ];
 
-export default function BottomTabBar({ activeTab = "investir" }: BottomTabBarProps) {
+export default function BottomTabBar({ activeTab = "investir", onTabPress }: BottomTabBarProps) {
   return (
     <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-white/5 bg-[#0C0C0E]">
       <div className="flex items-end justify-around px-2 pt-4 pb-7">
@@ -77,6 +78,7 @@ export default function BottomTabBar({ activeTab = "investir" }: BottomTabBarPro
           return (
             <button
               key={tab.id}
+              onClick={() => onTabPress?.(tab.id)}
               className={`flex flex-col items-center gap-1.5 transition-colors ${
                 isActive ? "text-brand-gold" : "text-text-tertiary"
               }`}

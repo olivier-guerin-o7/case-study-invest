@@ -47,7 +47,9 @@ interface InvestScreenProps {
   objectives?: ObjectivesData | null;
   objectivesRevision?: number;
   onOpenSheet?: () => void;
+  onSelectAsset?: (ticker: string) => void;
   isTouch?: boolean;
+  onToast?: (msg?: string) => void;
 }
 
 /* ============================================
@@ -121,7 +123,7 @@ const fadeUp = {
    COMPONENT
    ============================================ */
 
-export default function InvestScreen({ objectives = null, objectivesRevision = 0, onOpenSheet, isTouch = false }: InvestScreenProps) {
+export default function InvestScreen({ objectives = null, objectivesRevision = 0, onOpenSheet, onSelectAsset, isTouch = false, onToast }: InvestScreenProps) {
   const dragScrollX = useDragScroll("x");
   const dragScrollY = useDragScroll("y");
 
@@ -170,29 +172,12 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
                   Personnalisez votre investissement
                 </p>
               </div>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-text-tertiary">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-brand-gold">
                 <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           </button>
         )}
-      </motion.div>
-
-      {/* ── Market pulse strip (no title — self-explanatory) ── */}
-      <motion.div variants={fadeUp} className="flex items-start">
-        {marketIndices.map((index, i) => (
-          <div key={index.name} className="flex flex-1 items-start">
-            <div className={`flex flex-1 flex-col items-center py-1 ${i > 0 ? "pl-3" : ""}`}>
-              <p className="text-[11px] font-medium text-text-primary">{index.name}</p>
-              <span className={`mt-1 inline-block rounded-md px-1.5 py-0.5 text-sm font-semibold ${index.positive ? "bg-status-gain/12 text-status-gain" : "bg-status-loss/12 text-status-loss"}`}>
-                {index.change}
-              </span>
-            </div>
-            {i < marketIndices.length - 1 && (
-              <div className="mx-2.5 h-14 w-px shrink-0 self-center bg-border-subtle" />
-            )}
-          </div>
-        ))}
       </motion.div>
 
       {/* ── Filter pills (inline — no section title) ── */}
@@ -209,10 +194,11 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
           {filters.map((filter, i) => (
             <button
               key={filter}
+              onClick={i !== 0 ? () => onToast?.() : undefined}
               className={`shrink-0 rounded-full px-4 py-2.5 text-xs font-medium transition-colors ${
                 i === 0
                   ? "bg-brand-gold/15 text-brand-gold"
-                  : "bg-surface-prominent text-text-muted hover:text-text-secondary"
+                  : "bg-surface-prominent text-text-muted active:text-text-secondary"
               }`}
             >
               {filter}
@@ -232,7 +218,7 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
               <span className="text-[10px] font-semibold text-brand-blue">IA</span>
             </div>
           </div>
-          <button className="pr-1 text-xs font-medium text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={() => onToast?.()} className="pr-1 text-xs font-medium text-text-muted transition-colors active:text-text-secondary">
             Tout voir
           </button>
         </div>
@@ -242,6 +228,7 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
             <motion.button
               key={asset.ticker}
               variants={fadeUp}
+              onClick={() => onSelectAsset?.(asset.ticker)}
               className="flex items-center gap-3 rounded-card-lg bg-surface-default px-4 py-5 text-left transition-colors active:bg-surface-prominent"
             >
               {/* Logo placeholder */}
@@ -284,7 +271,7 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
       <motion.section variants={fadeUp}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-text-primary">Tendances Finary</h2>
-          <button className="pr-1 text-xs font-medium text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={() => onToast?.()} className="pr-1 text-xs font-medium text-text-muted transition-colors active:text-text-secondary">
             Tout voir
           </button>
         </div>
@@ -294,6 +281,7 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
             <motion.button
               key={asset.ticker}
               variants={fadeUp}
+              onClick={() => onSelectAsset?.(asset.ticker)}
               className="flex items-center gap-3 border-b border-border-subtle py-3.5 text-left last:border-0 transition-colors active:bg-surface-subtle"
             >
               {/* Rank + Logo */}
@@ -336,11 +324,11 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
         className="-mt-2 flex flex-col items-center gap-4"
       >
         <p className="text-center text-xs leading-relaxed text-text-muted">
-          Besoin d'aide pour
+          Envie de conseils pour
           <br />
           vos investissements ?
         </p>
-        <button className="rounded-full bg-brand-gold px-6 py-3 text-[15px] font-semibold text-black transition-opacity active:opacity-80">
+        <button onClick={() => onToast?.()} className="rounded-full bg-brand-gold px-6 py-3 text-[15px] font-semibold text-black transition-opacity active:opacity-80">
           Découvrir Finary+
         </button>
       </motion.div>
