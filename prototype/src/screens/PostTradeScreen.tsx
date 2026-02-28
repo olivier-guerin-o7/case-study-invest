@@ -15,8 +15,16 @@ interface PostTradeScreenProps {
   isTouch?: boolean;
   sharedDragX?: MotionValue<number>;
   objectiveLabel?: string | null;
+  objectiveAmount?: number | null;
   onToast?: () => void;
 }
+
+const goalLabels: Record<string, string> = {
+  croissance: "Croissance",
+  retraite: "Retraite",
+  revenus: "Revenus",
+  "court-terme": "Court terme",
+};
 
 /* ============================================
    ANIMATED COUNTER
@@ -56,6 +64,7 @@ export default function PostTradeScreen({
   isTouch = false,
   sharedDragX,
   objectiveLabel,
+  objectiveAmount,
   onToast,
 }: PostTradeScreenProps) {
   const asset = assetDatabase[ticker];
@@ -164,9 +173,8 @@ export default function PostTradeScreen({
   const previousPortfolioValue = 12_450;
   const newPortfolioValue = previousPortfolioValue + amount;
 
-  /* Objective progress */
-  const objectiveTarget = 10_000;
-  const progressPercent = Math.min(100, Math.round((amount / objectiveTarget) * 100));
+  /* Objective progress — accurate % based on invested amount vs objective target */
+  const progressPercent = objectiveAmount ? Math.min(100, Math.round((amount / objectiveAmount) * 100)) : 0;
 
   return (
     <motion.div
@@ -300,32 +308,25 @@ export default function PostTradeScreen({
           </div>
         </motion.div>
 
-        {/* AI reinforcement — objective progress */}
+        {/* Objective progress — compact card */}
         {objectiveLabel && (
           <motion.div
-            className="rounded-2xl border border-brand-gold/30 p-4 mt-3"
+            className="rounded-2xl bg-surface-default p-4 mt-3"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 1.0 }}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 1l2 4 4.5.7-3.25 3.2.75 4.6L8 11.3 3.99 13.5l.76-4.6L1.5 5.7 6 5z" fill="#F1C086" />
-              </svg>
-              <p className="text-[13px] font-medium text-brand-gold">{progressPercent}% de votre objectif</p>
-            </div>
-            <p className="text-[13px] text-text-muted leading-relaxed">
-              Vous avez franchi une étape importante vers votre objectif «&nbsp;{objectiveLabel}&nbsp;».
-              Continuez à investir régulièrement pour atteindre votre cible.
-            </p>
-            {/* Progress bar */}
-            <div className="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-brand-gold"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
-              />
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gold/10">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="7" stroke="#F1C086" strokeWidth="1.5" />
+                  <circle cx="10" cy="10" r="3" stroke="#F1C086" strokeWidth="1.5" />
+                  <circle cx="10" cy="10" r="1" fill="#F1C086" />
+                </svg>
+              </div>
+              <p className="text-[15px] font-medium text-text-primary">
+                {progressPercent}% de votre objectif {goalLabels[objectiveLabel] ?? objectiveLabel}
+              </p>
             </div>
           </motion.div>
         )}

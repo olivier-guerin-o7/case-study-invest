@@ -308,6 +308,7 @@ function AppContent({
                 isTouch={isTouch}
                 sharedDragX={postTradeDragX}
                 objectiveLabel={objectives?.goal ?? null}
+                objectiveAmount={objectives?.amount ?? null}
                 onToast={onToast}
               />
             </motion.div>
