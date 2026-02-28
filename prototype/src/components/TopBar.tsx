@@ -31,8 +31,7 @@ export default function TopBar({ onToast }: { onToast?: () => void }) {
             <circle cx="11" cy="11" r="8.5" />
             <polyline points="11,6 11,11 14,13" />
           </svg>
-          {/* Gold notification dot — small, clearly offset from icon */}
-          <div className="absolute top-1.5 right-1.5 h-[5px] w-[5px] rounded-full bg-brand-gold" />
+          {/* Gold notification dot removed per design feedback */}
         </button>
 
         {/* Eye / Visibility */}
