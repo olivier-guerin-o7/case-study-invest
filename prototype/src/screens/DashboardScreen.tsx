@@ -402,7 +402,7 @@ function FeedTab({
       icon: React.ReactNode;
       title: string;
       subtitle: string;
-      priority?: "urgent" | "action";
+      tag?: "urgent" | "action" | "success";
       action?: () => void;
       hasChevron?: boolean;
     };
@@ -416,6 +416,7 @@ function FeedTab({
         icon: <CheckCircle size={16} />,
         title: "CW8 \u00b7 Investissement actif",
         subtitle: `${tradeAmount.toLocaleString("fr-FR")} € \u00b7 Diversifié sur 1 500+ entreprises`,
+        tag: "success",
         action: onNavigateToInvest,
         hasChevron: true,
       });
@@ -425,6 +426,7 @@ function FeedTab({
         icon: <Sparkles size={16} />,
         title: "Épargne dormante détectée",
         subtitle: "3 200 € dépassent votre épargne de précaution",
+        tag: "action",
         action: onNavigateToInvest,
         hasChevron: true,
       });
@@ -436,6 +438,7 @@ function FeedTab({
       icon: <UtensilsCrossed size={16} />,
       title: "Budget restaurants : 85% atteint",
       subtitle: "340 € \u00b7 il reste 60 € ce mois",
+      tag: "urgent",
       action: () => onToast(),
       hasChevron: true,
     });
@@ -521,6 +524,15 @@ function FeedTab({
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-medium text-text-primary truncate">{item.title}</p>
               <p className="mt-0.5 text-[12px] text-text-muted truncate">
+                {item.tag && (
+                  <span className={`inline-block mr-1.5 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded-full align-middle ${
+                    item.tag === "urgent" ? "bg-status-loss/15 text-status-loss" :
+                    item.tag === "action" ? "bg-brand-gold/15 text-brand-gold" :
+                    "bg-status-gain/15 text-status-gain"
+                  }`}>
+                    {item.tag === "urgent" ? "Urgent" : item.tag === "action" ? "Action" : "Actif"}
+                  </span>
+                )}
                 {item.subtitle}
               </p>
             </div>
