@@ -45,6 +45,7 @@ export default function OrderReviewScreen({
   if (!asset) return null;
 
   const [accepted, setAccepted] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
 
   /* Drag-to-go-back */
   const dragX = sharedDragX ?? useMotionValue(0);
@@ -107,11 +108,6 @@ export default function OrderReviewScreen({
         ref={scrollRef}
         className={`flex-1 min-h-0 overflow-y-auto px-6 pb-[104px] ${isDraggingX ? "overflow-hidden" : ""}`}
       >
-        {/* Instruction message */}
-        <p className="text-[13px] text-text-muted text-center mt-2 mb-4">
-          Veuillez lire les informations ci-dessous, puis accepter les conditions pour confirmer votre ordre.
-        </p>
-
         {/* Order summary card */}
         <div className="rounded-2xl bg-surface-default p-4">
           <p className="text-[15px] font-medium text-text-primary mb-3">Récapitulatif de l&apos;ordre</p>
@@ -231,11 +227,16 @@ export default function OrderReviewScreen({
           className={`flex items-start gap-3 mt-4 text-left rounded-2xl border p-4 transition-colors ${
             accepted
               ? "border-brand-gold/50 bg-brand-gold/5"
-              : "border-brand-gold/40 bg-transparent"
+              : showWarning
+                ? "bg-transparent animate-border-pulse"
+                : "border-brand-gold/40 bg-transparent"
           }`}
         >
           <button
-            onClick={() => setAccepted(!accepted)}
+            onClick={() => {
+              setAccepted(!accepted);
+              if (!accepted) setShowWarning(false);
+            }}
             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
               accepted
                 ? "border-brand-gold bg-brand-gold"
@@ -255,15 +256,27 @@ export default function OrderReviewScreen({
           </p>
         </div>
 
-        {/* CTA — in flow, appears after scrolling and accepting */}
+        {/* Warning message — shown when tapping CTA without accepting */}
+        {showWarning && (
+          <p className="mt-4 text-[13px] text-status-warning text-center">
+            Veuillez accepter les conditions avant de confirmer.
+          </p>
+        )}
+
+        {/* CTA — always active, shows warning if not accepted */}
         <button
-          onClick={onConfirm}
-          disabled={!accepted}
-          className={`mt-5 w-full rounded-full py-3.5 text-[15px] font-semibold transition-all ${
-            accepted
-              ? "bg-brand-gold text-black active:opacity-80"
-              : "bg-surface-prominent text-text-tertiary"
-          }`}
+          onClick={() => {
+            if (accepted) {
+              onConfirm();
+            } else {
+              setShowWarning(true);
+              // Scroll down so CTA stays in view after warning message appears
+              setTimeout(() => {
+                scrollRef.current?.scrollBy({ top: 60, behavior: "smooth" });
+              }, 50);
+            }
+          }}
+          className="mt-5 w-full rounded-full py-3.5 text-[15px] font-semibold bg-brand-gold text-black active:opacity-80 transition-all"
         >
           Confirmer et passer l&apos;ordre
         </button>

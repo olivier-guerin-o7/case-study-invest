@@ -132,6 +132,15 @@ body {
 /* === Height breakpoint for short screens (iPhone SE etc.) === */
 @custom-variant tall (@media (min-height: 700px));
 
+/* === Border-only pulse (content stays opaque) === */
+@keyframes border-pulse {
+  0%, 100% { border-color: oklch(0.795 0.121 86.1 / 0.8); }
+  50% { border-color: oklch(0.795 0.121 86.1 / 0.2); }
+}
+.animate-border-pulse {
+  animation: border-pulse 1.5s ease-in-out infinite;
+}
+
 /* === Scrollbar hidden (mobile feel) === */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

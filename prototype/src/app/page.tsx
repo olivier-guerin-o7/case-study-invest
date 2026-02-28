@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useTransform, animate as fmAnimate } from "framer-motion";
 import StatusBar from "@/components/StatusBar";
 import TopBar from "@/components/TopBar";
 import BottomTabBar from "@/components/BottomTabBar";
@@ -11,12 +11,60 @@ import InvestScreen from "@/screens/InvestScreen";
 import AssetDetailScreen from "@/screens/AssetDetailScreen";
 import OrderScreen from "@/screens/OrderScreen";
 import OrderReviewScreen from "@/screens/OrderReviewScreen";
+import PostTradeScreen from "@/screens/PostTradeScreen";
+
+/* ============================================
+   AMBIENT GLOW SYSTEM — 3 intensity tiers
+   ============================================ */
+
+type GlowLevel = "low" | "medium" | "high";
+
+const GLOW = {
+  low: {
+    height: "h-64",
+    background: [
+      "radial-gradient(ellipse 80% 70% at 35% -5%, rgba(86, 130, 242, 0.35) 0%, transparent 60%)",
+      "radial-gradient(ellipse 80% 70% at 65% -5%, rgba(241, 192, 134, 0.30) 0%, transparent 60%)",
+    ].join(", "),
+  },
+  medium: {
+    height: "h-[500px]",
+    background: [
+      "radial-gradient(ellipse 140% 120% at 55% 2%, rgba(70, 120, 255, 0.08) 0%, transparent 65%)",
+      "radial-gradient(ellipse 120% 110% at 70% 0%, rgba(100, 70, 240, 0.06) 0%, transparent 65%)",
+      "radial-gradient(ellipse 130% 110% at 85% 4%, rgba(140, 70, 210, 0.08) 0%, transparent 60%)",
+      "radial-gradient(ellipse 100% 90% at 90% 2%, rgba(255, 200, 80, 0.06) 0%, transparent 60%)",
+      "radial-gradient(ellipse 90% 80% at 92% 10%, rgba(255, 185, 60, 0.04) 0%, transparent 55%)",
+      "radial-gradient(ellipse 80% 70% at 65% 8%, rgba(120, 90, 230, 0.04) 0%, transparent 60%)",
+    ].join(", "),
+  },
+  high: {
+    height: "h-[700px]",
+    background: [
+      "radial-gradient(ellipse 140% 120% at 55% 2%, rgba(70, 120, 255, 0.15) 0%, transparent 65%)",
+      "radial-gradient(ellipse 120% 110% at 70% 0%, rgba(100, 70, 240, 0.12) 0%, transparent 65%)",
+      "radial-gradient(ellipse 130% 110% at 85% 4%, rgba(140, 70, 210, 0.15) 0%, transparent 60%)",
+      "radial-gradient(ellipse 100% 90% at 90% 2%, rgba(255, 200, 80, 0.12) 0%, transparent 60%)",
+      "radial-gradient(ellipse 90% 80% at 92% 10%, rgba(255, 185, 60, 0.08) 0%, transparent 55%)",
+      "radial-gradient(ellipse 80% 70% at 65% 8%, rgba(120, 90, 230, 0.08) 0%, transparent 60%)",
+    ].join(", "),
+  },
+} as const;
+
+/** Map each screen to a glow intensity — easy to swap */
+const SCREEN_GLOW: Record<Screen, GlowLevel> = {
+  invest: "low",
+  assetDetail: "low",
+  orderScreen: "high",
+  orderReview: "medium",
+  postTrade: "high",
+};
 
 /* ============================================
    SHARED APP CONTENT
    ============================================ */
 
-type Screen = "invest" | "assetDetail" | "orderScreen" | "orderReview";
+type Screen = "invest" | "assetDetail" | "orderScreen" | "orderReview" | "postTrade";
 
 function AppContent({
   objectives,
@@ -35,6 +83,8 @@ function AppContent({
   onConfirmOrder,
   onBackFromReview,
   onExecuteOrder,
+  onDonePostTrade,
+  dismissing,
   orderAmount,
   onToast,
   toast,
@@ -55,6 +105,8 @@ function AppContent({
   onConfirmOrder: (amount: number) => void;
   onBackFromReview: () => void;
   onExecuteOrder: () => void;
+  onDonePostTrade: () => void;
+  dismissing: boolean;
   orderAmount: number;
   onToast: (msg?: string) => void;
   toast: string | null;
@@ -63,50 +115,44 @@ function AppContent({
   const detailDragX = useMotionValue(0);
   const orderDragX = useMotionValue(0);
   const reviewDragX = useMotionValue(0);
+  const postTradeDragX = useMotionValue(0);
   // Invest screen sits to the LEFT of detail — slides in side-by-side
   const investX = useTransform(detailDragX, (v) => `calc(-100% + ${v}px)`);
   // Opacity ramps from 0.5 → 1 as user swipes back (0 → 393px drag)
   const investOpacity = useTransform(detailDragX, [0, 393], [0.5, 1]);
 
+  // Animate invest screen in during dismiss (drive detailDragX 0→393 so investX tweens -100%→0)
+  useEffect(() => {
+    if (dismissing) {
+      fmAnimate(detailDragX, 393, {
+        type: "tween",
+        duration: 0.35,
+        ease: [0.32, 0.72, 0, 1],
+      });
+      return;
+    }
+  }, [dismissing, detailDragX]);
+
   // Reset dragX after render removes the style binding
   useEffect(() => {
-    if (activeScreen === "invest") detailDragX.set(0);
-    if (activeScreen !== "orderScreen" && activeScreen !== "orderReview") orderDragX.set(0);
-    if (activeScreen !== "orderReview") reviewDragX.set(0);
-  }, [activeScreen, detailDragX, orderDragX, reviewDragX]);
+    if (activeScreen === "invest" && !dismissing) detailDragX.set(0);
+    if (activeScreen !== "orderScreen" && activeScreen !== "orderReview" && activeScreen !== "postTrade" && !dismissing) orderDragX.set(0);
+    if (activeScreen !== "orderReview" && activeScreen !== "postTrade" && !dismissing) reviewDragX.set(0);
+    if (activeScreen !== "postTrade" && !dismissing) postTradeDragX.set(0);
+  }, [activeScreen, dismissing, detailDragX, orderDragX, reviewDragX, postTradeDragX]);
 
   return (
     <>
-      {/* Ambient glow — dual blue/gold gradient (varies per screen) */}
-      <div
-        className={`absolute inset-x-0 top-0 z-0 pointer-events-none transition-[height] duration-300 ${
-          activeScreen === "orderScreen" ? "h-[700px]" : activeScreen === "orderReview" ? "h-[500px]" : "h-64"
-        }`}
-        style={{
-          background: activeScreen === "orderScreen"
-            ? [
-                "radial-gradient(ellipse 140% 120% at 55% 2%, rgba(70, 120, 255, 0.15) 0%, transparent 65%)",
-                "radial-gradient(ellipse 120% 110% at 70% 0%, rgba(100, 70, 240, 0.12) 0%, transparent 65%)",
-                "radial-gradient(ellipse 130% 110% at 85% 4%, rgba(140, 70, 210, 0.15) 0%, transparent 60%)",
-                "radial-gradient(ellipse 100% 90% at 90% 2%, rgba(255, 200, 80, 0.12) 0%, transparent 60%)",
-                "radial-gradient(ellipse 90% 80% at 92% 10%, rgba(255, 185, 60, 0.08) 0%, transparent 55%)",
-                "radial-gradient(ellipse 80% 70% at 65% 8%, rgba(120, 90, 230, 0.08) 0%, transparent 60%)",
-              ].join(", ")
-            : activeScreen === "orderReview"
-            ? [
-                "radial-gradient(ellipse 140% 120% at 55% 2%, rgba(70, 120, 255, 0.08) 0%, transparent 65%)",
-                "radial-gradient(ellipse 120% 110% at 70% 0%, rgba(100, 70, 240, 0.06) 0%, transparent 65%)",
-                "radial-gradient(ellipse 130% 110% at 85% 4%, rgba(140, 70, 210, 0.08) 0%, transparent 60%)",
-                "radial-gradient(ellipse 100% 90% at 90% 2%, rgba(255, 200, 80, 0.06) 0%, transparent 60%)",
-                "radial-gradient(ellipse 90% 80% at 92% 10%, rgba(255, 185, 60, 0.04) 0%, transparent 55%)",
-                "radial-gradient(ellipse 80% 70% at 65% 8%, rgba(120, 90, 230, 0.04) 0%, transparent 60%)",
-              ].join(", ")
-            : [
-                "radial-gradient(ellipse 80% 70% at 35% -5%, rgba(86, 130, 242, 0.35) 0%, transparent 60%)",
-                "radial-gradient(ellipse 80% 70% at 65% -5%, rgba(241, 192, 134, 0.30) 0%, transparent 60%)",
-              ].join(", "),
-        }}
-      />
+      {/* Ambient glow — 3-tier system (low / medium / high) per screen */}
+      {(() => {
+        const glow = GLOW[SCREEN_GLOW[activeScreen]];
+        return (
+          <div
+            className={`absolute inset-x-0 top-0 z-0 pointer-events-none transition-[height] duration-300 ${glow.height}`}
+            style={{ background: glow.background }}
+          />
+        );
+      })()}
 
       {/* Top chrome — StatusBar only (desktop), always visible */}
       {!isTouch && (
@@ -121,24 +167,24 @@ function AppContent({
         <motion.div
           className="absolute inset-0 flex flex-col"
           style={
-            activeScreen !== "invest"
+            activeScreen !== "invest" || dismissing
               ? { x: investX, opacity: investOpacity }
               : undefined
           }
           animate={
-            activeScreen === "invest"
+            activeScreen === "invest" && !dismissing
               ? { x: 0, opacity: 1 }
               : { x: "-100%", opacity: 0.5 }
           }
           transition={
             activeScreen === "invest"
-              ? { duration: 0 } /* instant snap — dragX already drove the motion */
+              ? { type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }
               : { type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }
           }
         >
           {/* TopBar slides with invest screen — no pop-in on back */}
           <div className="shrink-0">
-            <TopBar />
+            <TopBar onToast={onToast} />
           </div>
           <div className="flex-1 min-h-0">
             <InvestScreen
@@ -152,17 +198,19 @@ function AppContent({
           </div>
         </motion.div>
 
-        {/* Asset detail screen — stays mounted when order or review is open */}
+        {/* Asset detail screen — stays mounted when deeper screens are open, or during dismiss */}
         <AnimatePresence initial={false}>
-          {(activeScreen === "assetDetail" || activeScreen === "orderScreen" || activeScreen === "orderReview") && selectedAsset && (
+          {(activeScreen === "assetDetail" || activeScreen === "orderScreen" || activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
             <motion.div
               key="assetDetail"
               className="absolute inset-0 overflow-hidden"
               initial={{ x: "100%" }}
               animate={
-                activeScreen !== "assetDetail"
-                  ? { x: "-100%", opacity: 0.5 }
-                  : { x: 0, opacity: 1 }
+                dismissing
+                  ? { x: "-100%", opacity: 0 }
+                  : activeScreen !== "assetDetail"
+                    ? { x: "-100%", opacity: 0.5 }
+                    : { x: 0, opacity: 1 }
               }
               exit={{ x: "100%", opacity: 1, transition: { duration: 0 } }}
               transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
@@ -179,19 +227,21 @@ function AppContent({
           )}
         </AnimatePresence>
 
-        {/* Order screen — stays mounted when review is open */}
+        {/* Order screen — stays mounted when deeper screens are open, or during dismiss */}
         <AnimatePresence initial={false}>
-          {(activeScreen === "orderScreen" || activeScreen === "orderReview") && selectedAsset && (
+          {(activeScreen === "orderScreen" || activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
             <motion.div
               key="orderScreen"
               className="absolute inset-0 overflow-hidden"
               initial={{ x: "100%" }}
               animate={
-                activeScreen === "orderReview"
-                  ? { x: "-100%", opacity: 0.5 }
-                  : { x: 0, opacity: 1 }
+                dismissing
+                  ? { x: "-100%", opacity: 0 }
+                  : activeScreen === "orderReview" || activeScreen === "postTrade"
+                    ? { x: "-100%", opacity: 0.5 }
+                    : { x: 0, opacity: 1 }
               }
-              exit={{ x: "100%" }}
+              exit={{ x: "-100%", transition: { duration: 0 } }}
               transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
             >
               <OrderScreen
@@ -207,15 +257,21 @@ function AppContent({
           )}
         </AnimatePresence>
 
-        {/* Order review screen — MiFID legal step */}
+        {/* Order review screen — stays mounted when postTrade is open, or during dismiss */}
         <AnimatePresence initial={false}>
-          {activeScreen === "orderReview" && selectedAsset && (
+          {(activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
             <motion.div
               key="orderReview"
               className="absolute inset-0 overflow-hidden"
               initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              animate={
+                dismissing
+                  ? { x: "-100%", opacity: 0 }
+                  : activeScreen === "postTrade"
+                    ? { x: "-100%", opacity: 0.5 }
+                    : { x: 0, opacity: 1 }
+              }
+              exit={{ x: "-100%", transition: { duration: 0 } }}
               transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
             >
               <OrderReviewScreen
@@ -225,6 +281,34 @@ function AppContent({
                 onConfirm={onExecuteOrder}
                 isTouch={isTouch}
                 sharedDragX={reviewDragX}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Post-trade confirmation */}
+        <AnimatePresence initial={false}>
+          {(activeScreen === "postTrade" || dismissing) && selectedAsset && (
+            <motion.div
+              key="postTrade"
+              className="absolute inset-0 overflow-hidden"
+              initial={{ x: "100%" }}
+              animate={
+                dismissing
+                  ? { x: "100%", opacity: 0 }
+                  : { x: 0, opacity: 1 }
+              }
+              exit={{ x: "100%", transition: { duration: 0 } }}
+              transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+            >
+              <PostTradeScreen
+                ticker={selectedAsset}
+                amount={orderAmount}
+                onDone={onDonePostTrade}
+                isTouch={isTouch}
+                sharedDragX={postTradeDragX}
+                objectiveLabel={objectives?.goal ?? null}
+                onToast={onToast}
               />
             </motion.div>
           )}
@@ -242,8 +326,8 @@ function AppContent({
             transition={{ duration: 0.2 }}
             className="absolute inset-x-0 top-16 z-30 flex justify-center pointer-events-none"
           >
-            <div className="rounded-full bg-[#2A2A2C] px-5 py-2.5 shadow-lg">
-              <p className="text-[13px] font-medium text-white/80">{toast}</p>
+            <div className="rounded-full bg-brand-gold px-5 py-2.5 shadow-lg">
+              <p className="text-[13px] font-medium text-black">{toast}</p>
             </div>
           </motion.div>
         )}
@@ -354,9 +438,18 @@ export default function Home() {
   }, []);
 
   const handleExecuteOrder = useCallback(() => {
-    // TODO: transition to post-trade confirmation
-    handleToast("Ordre exécuté !");
-  }, [handleToast]);
+    setActiveScreen("postTrade");
+  }, []);
+  const [dismissing, setDismissing] = useState(false);
+  const handleDonePostTrade = useCallback(() => {
+    setDismissing(true);
+    setActiveScreen("invest");
+    // Delay unmount so exit animations play (300ms transition)
+    setTimeout(() => {
+      setSelectedAsset(null);
+      setDismissing(false);
+    }, 350);
+  }, []);
 
   /* ── Mobile: fullscreen, no frame ── */
   if (isTouch) {
@@ -379,6 +472,8 @@ export default function Home() {
           onConfirmOrder={handleConfirmOrder}
           onBackFromReview={handleBackFromReview}
           onExecuteOrder={handleExecuteOrder}
+          onDonePostTrade={handleDonePostTrade}
+          dismissing={dismissing}
           orderAmount={orderAmount}
           onToast={handleToast}
           toast={toast}
@@ -393,9 +488,9 @@ export default function Home() {
       {/* Presentation controls */}
       {(() => {
         const light = bgLightness >= 50;
-        const labelCls = `text-center text-[9px] font-medium uppercase tracking-wider ${light ? "text-black/40" : "text-white/40"}`;
+        const labelCls = `text-center text-[9px] font-medium uppercase tracking-wider ${light ? "text-black/70" : "text-white"}`;
         const btnCls = `flex h-9 w-9 items-center justify-center rounded-full transition-colors ${light ? "bg-black/8 text-black/75 hover:bg-black/12 hover:text-black/90" : "bg-white/8 text-white/75 hover:bg-white/12 hover:text-white/90"}`;
-        const valCls = `flex h-9 w-9 items-center justify-center rounded-full text-[10px] font-medium transition-colors ${light ? "text-black/75 hover:text-black/90" : "text-white/75 hover:text-white/90"}`;
+        const valCls = `flex h-9 w-9 items-center justify-center rounded-full text-[10px] font-medium transition-colors ${light ? "text-black/70 hover:text-black/90" : "text-white hover:text-white"}`;
         const divCls = `mx-auto h-px w-5 ${light ? "bg-black/20" : "bg-white/20"}`;
         return (
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3">
@@ -566,6 +661,8 @@ export default function Home() {
           onConfirmOrder={handleConfirmOrder}
           onBackFromReview={handleBackFromReview}
           onExecuteOrder={handleExecuteOrder}
+          onDonePostTrade={handleDonePostTrade}
+          dismissing={dismissing}
           orderAmount={orderAmount}
           onToast={handleToast}
           toast={toast}
