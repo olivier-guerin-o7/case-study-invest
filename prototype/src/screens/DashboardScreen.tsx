@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
+import { Sparkles, UtensilsCrossed, Bell, TrendingDown, Shield, ArrowUpCircle, Clock, CheckCircle, PieChart } from "lucide-react";
 import ObjectivesIndicator from "@/components/ObjectivesIndicator";
 import type { ObjectivesData } from "@/components/ObjectivesSheet";
 
@@ -398,7 +399,6 @@ function FeedTab({
   const items = useMemo(() => {
     type FeedItem = {
       key: string;
-      color: "gold" | "blue" | "green" | "red";
       icon: React.ReactNode;
       title: string;
       subtitle: string;
@@ -413,12 +413,7 @@ function FeedTab({
     if (hasCompletedTrade) {
       result.push({
         key: "invest-active",
-        color: "green",
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M4 8l3 3 5-6" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
+        icon: <CheckCircle size={16} />,
         title: "CW8 \u00b7 Investissement actif",
         subtitle: `${tradeAmount.toLocaleString("fr-FR")} € \u00b7 Diversifié sur 1 500+ entreprises`,
         action: onNavigateToInvest,
@@ -427,15 +422,9 @@ function FeedTab({
     } else {
       result.push({
         key: "sleeping-money",
-        color: "gold",
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1l1.5 3.5L12 7l-3.5 1.5L7 12l-1.5-3.5L2 7l3.5-2.5L7 1z" stroke="#F1C086" strokeWidth="1" strokeLinejoin="round" />
-          </svg>
-        ),
+        icon: <Sparkles size={16} />,
         title: "Épargne dormante détectée",
         subtitle: "3 200 € dépassent votre épargne de précaution",
-        priority: "action",
         action: onNavigateToInvest,
         hasChevron: true,
       });
@@ -444,15 +433,9 @@ function FeedTab({
     // Item 2 — Budget alert (always present)
     result.push({
       key: "budget-alert",
-      color: "red",
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M4 2v4c0 1.1.9 2 2 2h.5V12M10 2v10M10 2c0 2-1.5 3-1.5 4.5c0 .8.7 1.5 1.5 1.5" stroke="#EF4444" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
+      icon: <UtensilsCrossed size={16} />,
       title: "Budget restaurants : 85% atteint",
       subtitle: "340 € \u00b7 il reste 60 € ce mois",
-      priority: "urgent",
       action: () => onToast(),
       hasChevron: true,
     });
@@ -460,13 +443,7 @@ function FeedTab({
     // Item 3 — Subscription detection
     result.push({
       key: "subscription",
-      color: "blue",
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <rect x="2.5" y="4" width="11" height="8" rx="1.5" stroke="#5682F2" strokeWidth="1.2" />
-          <path d="M5 7.5h6M5 9.5h3" stroke="#5682F2" strokeWidth="1" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: <Bell size={16} />,
       title: "Nouvel abonnement détecté",
       subtitle: "Netflix 17,99 €/mois",
       action: () => onToast(),
@@ -477,27 +454,16 @@ function FeedTab({
     if (hasCompletedTrade) {
       result.push({
         key: "allocation",
-        color: "gold",
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M2 11l3-3 2.5 2.5L13 4" stroke="#F1C086" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
+        icon: <PieChart size={16} />,
         title: `Allocation : ${investPercent}% investi`,
         subtitle: "Objectif recommandé : 20-30%",
-        priority: "action",
         action: onOpenSheet,
         hasChevron: true,
       });
     } else {
       result.push({
         key: "savings-opportunity",
-        color: "green",
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M2 11l3-3 2.5 2.5L13 4" stroke="#22C55E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
+        icon: <TrendingDown size={16} />,
         title: "Dépenses en baisse de 12%",
         subtitle: "Ce mois vs votre moyenne",
         action: () => onToast(),
@@ -508,12 +474,7 @@ function FeedTab({
     // Item 5 — Account health
     result.push({
       key: "account-health",
-      color: "green",
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M7 2C5.5 2 3 3.5 3 6c0 2.8 4 5 4 5s4-2.2 4-5c0-2.5-2.5-4-4-4z" stroke="#22C55E" strokeWidth="1.2" strokeLinejoin="round" />
-        </svg>
-      ),
+      icon: <Shield size={16} />,
       title: "Épargne de précaution OK",
       subtitle: "3 mois de dépenses couverts",
       action: () => onToast(),
@@ -523,13 +484,7 @@ function FeedTab({
     // Item 6 — Salary received
     result.push({
       key: "salary",
-      color: "blue",
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M7 2v10M4.5 4.5L7 2l2.5 2.5" stroke="#5682F2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M2 8h10" stroke="#5682F2" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: <ArrowUpCircle size={16} />,
       title: "Virement reçu · Salaire",
       subtitle: "2 450 € · Boursorama",
       action: () => onToast(),
@@ -539,13 +494,7 @@ function FeedTab({
     // Item 7 — Livret A rate info
     result.push({
       key: "livret-a",
-      color: "gold",
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="5" stroke="#F1C086" strokeWidth="1.2" />
-          <path d="M7 4.5v3l2 1.5" stroke="#F1C086" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
+      icon: <Clock size={16} />,
       title: "Livret A : taux en baisse",
       subtitle: "2,4% depuis février · 880 € d'intérêts/an",
       action: () => onToast(),
@@ -554,13 +503,6 @@ function FeedTab({
 
     return result;
   }, [hasCompletedTrade, tradeAmount, investPercent, onNavigateToInvest, onOpenSheet, onToast]);
-
-  const colorMap = {
-    gold: "bg-brand-gold/15",
-    blue: "bg-brand-blue/15",
-    green: "bg-status-gain/15",
-    red: "bg-status-loss/15",
-  };
 
   return (
     <div className="rounded-card-lg bg-surface-default overflow-hidden">
@@ -575,9 +517,7 @@ function FeedTab({
               item.action ? "active:bg-surface-subtle" : ""
             } ${!isLast ? "border-b border-white/5" : ""}`}
           >
-            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${colorMap[item.color]}`}>
-              {item.icon}
-            </div>
+            <span className="shrink-0 text-white/40">{item.icon}</span>
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-medium text-text-primary truncate">{item.title}</p>
               <p className="mt-0.5 text-[12px] text-text-muted truncate">
