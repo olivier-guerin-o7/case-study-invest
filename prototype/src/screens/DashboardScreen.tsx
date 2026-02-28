@@ -75,175 +75,132 @@ const fadeUp = {
 };
 
 /* ============================================
-   PULSE LINE DATAVIZ
+   HEALTH BOXES DATAVIZ (4 square cards)
    ============================================ */
 
-// Deterministic bank data — gentle upward trend (no Math.random to avoid hydration mismatch)
-const BANK_DATA = [
-  11_800, 11_830, 11_810, 11_870, 11_900, 11_880, 11_920, 11_960, 11_940, 11_980,
-  12_010, 12_040, 12_020, 12_060, 12_090, 12_070, 12_110, 12_140, 12_120, 12_160,
-  12_190, 12_170, 12_210, 12_250, 12_230, 12_280, 12_320, 12_360, 12_400, 12_450,
-];
-
-function PulseLine({
-  hasCompletedTrade,
-  tradeAmount,
-}: {
-  hasCompletedTrade: boolean;
-  tradeAmount: number;
-}) {
-  const W = 360;
-  const H = 120;
-  const PAD_TOP = 12;
-  const PAD_BOTTOM = 8;
-
-  const bankData = BANK_DATA;
-
-  const totalData = useMemo(() => {
-    if (!hasCompletedTrade) return bankData;
-    // Add investment in last 8 points (gradual ramp, wider spread)
-    return bankData.map((v, i) => {
-      if (i < 22) return v;
-      const progress = (i - 21) / 8;
-      return v + Math.round(tradeAmount * progress);
-    });
-  }, [bankData, hasCompletedTrade, tradeAmount]);
-
-  const investData = useMemo(() => {
-    if (!hasCompletedTrade) return null;
-    return bankData.map((_v, i) => {
-      if (i < 22) return 0;
-      const progress = (i - 21) / 8;
-      return Math.round(tradeAmount * progress);
-    });
-  }, [bankData, hasCompletedTrade, tradeAmount]);
-
-  // Scale to SVG coordinates
-  const allValues = totalData;
-  const minVal = Math.min(...allValues) * 0.97;
-  const maxVal = Math.max(...allValues) * 1.03;
-  const range = maxVal - minVal || 1;
-
-  const toX = (i: number) => (i / (totalData.length - 1)) * W;
-  const toY = (val: number) => PAD_TOP + (1 - (val - minVal) / range) * (H - PAD_TOP - PAD_BOTTOM);
-
-  // Grid lines (3 horizontal)
-  const gridYs = [0.25, 0.5, 0.75].map((p) => PAD_TOP + p * (H - PAD_TOP - PAD_BOTTOM));
-
-  // Bank area path
-  const bankPoints = bankData.map((v, i) => `${toX(i)},${toY(v)}`).join(" L");
-  const bankArea = `M0,${H} L0,${toY(bankData[0])} L${bankPoints} L${W},${toY(bankData[bankData.length - 1])} L${W},${H} Z`;
-
-  // Investment area path (gold, stacked on top of bank)
-  let investArea: string | null = null;
-  if (investData) {
-    const investPoints: string[] = [];
-    const bankReverse: string[] = [];
-    for (let i = 22; i < 30; i++) {
-      investPoints.push(`${toX(i)},${toY(bankData[i] + investData[i])}`);
-      bankReverse.unshift(`${toX(i)},${toY(bankData[i])}`);
-    }
-    investArea = `M${investPoints.join(" L")} L${bankReverse.join(" L")} Z`;
-  }
-
-  // Total line points
-  const totalPoints = totalData.map((v, i) => `${toX(i)},${toY(v)}`).join(" ");
-
-  // Last point position for animated dot
-  const lastX = toX(totalData.length - 1);
-  const lastY = toY(totalData[totalData.length - 1]);
-
-  // Estimate path length for draw-in animation
-  const totalLength = useMemo(() => {
-    let len = 0;
-    for (let i = 1; i < totalData.length; i++) {
-      const dx = toX(i) - toX(i - 1);
-      const dy = toY(totalData[i]) - toY(totalData[i - 1]);
-      len += Math.sqrt(dx * dx + dy * dy);
-    }
-    return Math.ceil(len);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalData]);
-
+// Mini sparkline — 7 data points, line draws in
+function MiniSparkline({ data, animate, delay = 0 }: { data: number[]; animate: boolean; delay?: number }) {
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const w = 44;
+  const h = 18;
+  const points = data
+    .map((v, i) => {
+      const x = 1 + (i / (data.length - 1)) * (w - 2);
+      const y = h - 1 - ((v - min) / range) * (h - 2);
+      return `${Math.round(x * 10) / 10},${Math.round(y * 10) / 10}`;
+    })
+    .join(" ");
   return (
-    <div className="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[120px]" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="bankGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#5682F2" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#5682F2" stopOpacity="0.03" />
-          </linearGradient>
-          <linearGradient id="investGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#F1C086" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#F1C086" stopOpacity="0.03" />
-          </linearGradient>
-          <filter id="lineGlow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none">
+      <motion.polyline
+        points={points}
+        stroke="#F1C086"
+        strokeOpacity="0.65"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        initial={animate ? { pathLength: 0 } : undefined}
+        animate={animate ? { pathLength: 1 } : undefined}
+        transition={{ duration: 0.7, delay, ease: "easeInOut" }}
+      />
+    </svg>
+  );
+}
 
-        {/* Horizontal grid lines */}
-        {gridYs.map((y, i) => (
-          <line key={i} x1="0" y1={y} x2={W} y2={y} stroke="white" opacity="0.04" strokeWidth="1" />
-        ))}
+// Circular arc gauge — arc sweeps in
+function MiniGauge({ percent, animate, delay = 0 }: { percent: number; animate: boolean; delay?: number }) {
+  const s = 22;
+  const sw = 2;
+  const r = (s - sw) / 2;
+  const c = 2 * Math.PI * r;
+  const fill = (percent / 100) * c;
+  return (
+    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+      <circle cx={s / 2} cy={s / 2} r={r} stroke="white" strokeOpacity="0.10" strokeWidth={sw} fill="none" />
+      <motion.circle
+        cx={s / 2} cy={s / 2} r={r}
+        stroke="#F1C086" strokeOpacity="0.60" strokeWidth={sw} fill="none"
+        strokeLinecap="round"
+        transform={`rotate(-90 ${s / 2} ${s / 2})`}
+        initial={animate ? { strokeDasharray: `0 ${Math.round(c * 10) / 10}` } : undefined}
+        animate={animate ? { strokeDasharray: `${Math.round(fill * 10) / 10} ${Math.round((c - fill) * 10) / 10}` } : undefined}
+        transition={{ duration: 0.7, delay, ease: "easeInOut" }}
+      />
+    </svg>
+  );
+}
 
-        {/* Bank area (blue) */}
-        <motion.path
-          d={bankArea}
-          fill="url(#bankGrad)"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        />
-
-        {/* Investment area (gold, post-trade only) */}
-        {investArea && (
-          <motion.path
-            d={investArea}
-            fill="url(#investGrad)"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
+// Vertical bars — grow up sequentially
+function MiniBars({ filled, total, animate, delay = 0 }: { filled: number; total: number; animate: boolean; delay?: number }) {
+  return (
+    <div className="flex gap-[5px] items-end h-[18px]">
+      {Array.from({ length: total }).map((_, i) => {
+        const targetH = 6 + (i / (total - 1)) * 12;
+        return (
+          <motion.div key={i} className="w-[2px] rounded-[0.5px]"
+            style={{
+              backgroundColor: i < filled ? "rgba(241,192,134,0.60)" : "rgba(255,255,255,0.10)",
+            }}
+            initial={animate ? { height: 0 } : { height: targetH }}
+            animate={{ height: targetH }}
+            transition={{ duration: 0.45, delay: delay + i * 0.06, ease: "easeInOut" }}
           />
-        )}
-
-        {/* Total line (white, glowing) */}
-        <motion.polyline
-          points={totalPoints}
-          stroke="rgba(255,255,255,0.9)"
-          strokeWidth="2"
-          fill="none"
-          filter="url(#lineGlow)"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          initial={{ strokeDasharray: totalLength, strokeDashoffset: totalLength }}
-          animate={{ strokeDashoffset: 0 }}
-          transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }}
-        />
-
-        {/* Animated end dot */}
-        <motion.circle
-          cx={lastX}
-          cy={lastY}
-          r="4"
-          fill="white"
-          stroke="#F1C086"
-          strokeWidth="1.5"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: [1, 1.3, 1] }}
-          transition={{
-            opacity: { duration: 0.3, delay: 1.4 },
-            scale: { duration: 2, delay: 1.4, repeat: Infinity, ease: "easeInOut" },
-          }}
-        />
-      </svg>
+        );
+      })}
     </div>
   );
 }
+
+// Horizontal stacked bar — fills from left
+function MiniStackBar({ percent, animate, delay = 0 }: { percent: number; animate: boolean; delay?: number }) {
+  return (
+    <div className="relative w-10 h-[2px] rounded-full overflow-hidden bg-white/[0.12]">
+      <motion.div
+        className="absolute inset-y-0 left-0 rounded-full"
+        style={{ backgroundColor: "rgba(241,192,134,0.65)" }}
+        initial={animate ? { width: "0%" } : { width: `${percent}%` }}
+        animate={{ width: `${percent}%` }}
+        transition={{ duration: 0.6, delay, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
+
+function HealthBoxes({ hasCompletedTrade, investPercent }: { hasCompletedTrade: boolean; investPercent: number }) {
+  const sparkData = [9050, 9020, 9180, 9120, 9200, 9150, 9200];
+  const budgetUsed = 72;
+  const epargneMonths = 3;
+  const epargneTotal = 6;
+  const investPct = hasCompletedTrade ? investPercent : 25;
+
+  const boxes = [
+    { label: "Compte", viz: (d: number) => <MiniSparkline data={sparkData} animate delay={d} />, value: "9 200 €" },
+    { label: "Budget", viz: (d: number) => <MiniGauge percent={budgetUsed} animate delay={d} />, value: `${budgetUsed}%` },
+    { label: "Épargne", viz: (d: number) => <MiniBars filled={epargneMonths} total={epargneTotal} animate delay={d} />, value: `${epargneMonths} mois` },
+    { label: "Invest.", viz: (d: number) => <MiniStackBar percent={investPct} animate delay={d} />, value: hasCompletedTrade ? `${investPct}%` : "3 800 €" },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {boxes.map((box, idx) => (
+        <div
+          key={box.label}
+          className="flex flex-col items-center rounded-xl bg-white/[0.05] py-4 px-2"
+        >
+          <span className="text-[9px] font-medium tracking-wide uppercase text-white/40">{box.label}</span>
+          <div className="flex-1 flex items-center justify-center py-2">
+            {box.viz(0.3 + idx * 0.18)}
+          </div>
+          <p className="text-[11px] font-semibold text-white/80">{box.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 
 /* ============================================
    SHARED ICONS
@@ -276,15 +233,16 @@ export default function DashboardScreen({
   const bankValue = 12_450;
   const investmentValue = hasCompletedTrade ? tradeAmount : 0;
   const totalValue = bankValue + investmentValue;
-  const changePercent = hasCompletedTrade ? "+8,42%" : "+0,36%";
-  const investPercent = hasCompletedTrade ? Math.round((investmentValue / totalValue) * 100) : 0;
+  // changePercent now inlined in JSX
+  // Always show a visual split — fake 75/25 pre-trade, real ratio post-trade
+  const investPercent = hasCompletedTrade ? Math.round((investmentValue / totalValue) * 100) : 25;
   const bankPercent = 100 - investPercent;
 
   /* Inner tab config */
   const innerTabs: { id: InnerTab; label: string }[] = [
     { id: "feed", label: "Activité" },
-    { id: "insights", label: "Insights" },
-    { id: "support", label: "Découverte" },
+    { id: "insights", label: "Infos" },
+    { id: "support", label: "À faire" },
   ];
 
   return (
@@ -300,74 +258,28 @@ export default function DashboardScreen({
       animate="show"
     >
       {/* ══════════════════════════════════════════
-          1. AT-A-GLANCE HERO
+          1. AT-A-GLANCE HERO — Text + Health Boxes
           ══════════════════════════════════════════ */}
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="flex flex-col items-center">
         {/* Mood greeting */}
-        <p className="text-[13px] text-text-muted mb-1">
+        <p className="text-[13px] text-white/35 mb-0.5">
           {hasCompletedTrade ? "Votre patrimoine s\u2019enrichit" : "Belle dynamique, Jane"}
         </p>
 
         {/* Patrimoine value */}
-        <p className="text-[28px] font-bold text-text-primary leading-tight">
+        <p className="text-[32px] font-bold text-white/90 leading-tight">
           {totalValue.toLocaleString("fr-FR")},00&nbsp;€
         </p>
 
-        {/* Directional indicator — PERCENTAGE */}
-        <div className="mt-1 flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 9V3M6 3L3.5 5.5M6 3L8.5 5.5" stroke="#22C55E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-[13px] text-status-gain">
-            {changePercent} ce mois
-          </span>
+        {/* Directional indicator — gold accent */}
+        <span className="mt-0.5 text-[13px] text-brand-gold/70">
+          {hasCompletedTrade ? "+8,42%" : "+3,4%"} ce mois
+        </span>
+
+        {/* Health Boxes */}
+        <div className="mt-8 w-full">
+          <HealthBoxes hasCompletedTrade={hasCompletedTrade} investPercent={investPercent} />
         </div>
-
-        {/* PulseLine dataviz */}
-        <button onClick={onOpenSheet} className="mt-3 w-full active:opacity-80 transition-opacity">
-          <PulseLine hasCompletedTrade={hasCompletedTrade} tradeAmount={tradeAmount} />
-
-          {/* Thin health bar — integrated with dataviz */}
-          <div className="mt-1 flex items-center gap-3">
-            <div className="h-1 flex-1 rounded-full bg-surface-subtle overflow-hidden flex gap-px">
-              <div
-                className="rounded-full bg-brand-blue transition-all duration-700"
-                style={{ width: `${bankPercent}%` }}
-              />
-              {hasCompletedTrade && (
-                <motion.div
-                  className="rounded-full bg-brand-gold transition-all duration-700"
-                  style={{ width: `${investPercent}%` }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                />
-              )}
-            </div>
-            {/* Inline dot labels */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-1">
-                <div className="h-1.5 w-1.5 rounded-full bg-brand-blue" />
-                <span className="text-[10px] text-text-tertiary">
-                  {bankValue.toLocaleString("fr-FR")}&nbsp;€
-                </span>
-              </div>
-              {hasCompletedTrade && (
-                <motion.div
-                  className="flex items-center gap-1"
-                  initial={{ opacity: 0, x: -4 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 }}
-                >
-                  <div className="h-1.5 w-1.5 rounded-full bg-brand-gold" />
-                  <span className="text-[10px] text-text-tertiary">
-                    {investmentValue.toLocaleString("fr-FR")}&nbsp;€
-                  </span>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </button>
       </motion.div>
 
       {/* ══════════════════════════════════════════
@@ -669,7 +581,6 @@ function FeedTab({
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-medium text-text-primary truncate">{item.title}</p>
               <p className="mt-0.5 text-[12px] text-text-muted truncate">
-                {item.priority && <PriorityTag type={item.priority} />}
                 {item.subtitle}
               </p>
             </div>

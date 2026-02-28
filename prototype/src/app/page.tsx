@@ -90,6 +90,7 @@ function AppContent({
   dismissing,
   orderAmount,
   hasCompletedTrade,
+  dashboardKey,
   onToast,
   toast,
 }: {
@@ -115,6 +116,7 @@ function AppContent({
   dismissing: boolean;
   orderAmount: number;
   hasCompletedTrade: boolean;
+  dashboardKey: number;
   onToast: (msg?: string) => void;
   toast: string | null;
 }) {
@@ -152,7 +154,7 @@ function AppContent({
     <>
       {/* Ambient glow — 3-tier system (low / medium / high) per screen */}
       {(() => {
-        const glowLevel = activeTab === "synthese" ? "low" : SCREEN_GLOW[activeScreen];
+        const glowLevel = activeTab === "synthese" ? "medium" : SCREEN_GLOW[activeScreen];
         const glow = GLOW[glowLevel];
         return (
           <div
@@ -180,6 +182,7 @@ function AppContent({
             </div>
             <div className="flex-1 min-h-0">
               <DashboardScreen
+                key={dashboardKey}
                 objectives={objectives}
                 objectivesRevision={objectivesRevision}
                 onOpenSheet={onOpenSheet}
@@ -399,6 +402,7 @@ export default function Home() {
   const [activeScreen, setActiveScreen] = useState<Screen>("invest");
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [hasCompletedTrade, setHasCompletedTrade] = useState(false);
+  const [dashboardKey, setDashboardKey] = useState(0);
   const [showQR, setShowQR] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [zoom, setZoom] = useState(1);
@@ -518,6 +522,7 @@ export default function Home() {
           dismissing={dismissing}
           orderAmount={orderAmount}
           hasCompletedTrade={hasCompletedTrade}
+          dashboardKey={dashboardKey}
           onToast={handleToast}
           toast={toast}
         />
@@ -547,6 +552,7 @@ export default function Home() {
             setSelectedAsset(null);
             setActiveTab("synthese");
             setHasCompletedTrade(false);
+            setDashboardKey(k => k + 1);
           }}
           className={btnCls}
         >
@@ -712,6 +718,7 @@ export default function Home() {
           dismissing={dismissing}
           orderAmount={orderAmount}
           hasCompletedTrade={hasCompletedTrade}
+          dashboardKey={dashboardKey}
           onToast={handleToast}
           toast={toast}
         />
