@@ -16,6 +16,7 @@ interface OrderScreenProps {
   sharedDragX?: MotionValue<number>;
   onToast?: (msg?: string) => void;
   objectives?: ObjectivesData | null;
+  onConfirmOrder?: (amount: number) => void;
 }
 
 /* ============================================
@@ -28,7 +29,7 @@ const presetAmounts = [100, 500, 1000];
    SCREEN COMPONENT
    ============================================ */
 
-export default function OrderScreen({ ticker, onBack, isTouch = false, sharedDragX, onToast, objectives }: OrderScreenProps) {
+export default function OrderScreen({ ticker, onBack, isTouch = false, sharedDragX, onToast, objectives, onConfirmOrder }: OrderScreenProps) {
   const asset = assetDatabase[ticker];
   if (!asset) return null;
 
@@ -148,7 +149,7 @@ export default function OrderScreen({ ticker, onBack, isTouch = false, sharedDra
   return (
     <motion.div
       ref={scrollRef}
-      className="flex h-full flex-col"
+      className="relative flex h-full flex-col"
       style={{ x: dragX }}
     >
 
@@ -173,101 +174,116 @@ export default function OrderScreen({ ticker, onBack, isTouch = false, sharedDra
         </button>
       </div>
 
-      {/* Content — flex layout, no scroll */}
-      <div className="flex-1 min-h-0 flex flex-col px-6 pb-[104px]">
-        {/* pb-[88px] = tab bar height — keeps content above it */}
+      {/* Content — bottom-up layout: CTA anchored → fees → amount → asset fills remaining */}
+      <div className={`flex-1 min-h-0 overflow-y-auto ${isDraggingX ? "overflow-hidden" : ""}`}>
+        <div className="flex min-h-full flex-col px-6 pb-[104px]">
 
-        {/* ── Asset zone — grows 2× to absorb extra space ── */}
-        <div className="flex-[2] flex flex-col items-center justify-center min-h-0">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-prominent mb-2">
-            <span className="text-[11px] font-semibold text-white/90">{asset.ticker.slice(0, 2).toUpperCase()}</span>
-          </div>
-          <p className="text-[15px] font-medium text-text-primary">{asset.name}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">{asset.subtitle}</p>
-          <p className="text-[15px] font-semibold text-text-primary mt-1">{asset.price}</p>
-        </div>
-
-        {/* ── Amount input — always visible ── */}
-        <div className="shrink-0 mb-2 px-6">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const next = Math.max(0, amount - 50);
-                setAmount(next);
-              }}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brand-gold/60 text-text-muted transition-colors active:bg-surface-prominent"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-            <div className="flex h-11 flex-1 items-center justify-center gap-1 rounded-xl border border-brand-gold/60 px-4">
-              <input
-                type="number"
-                value={amount || ""}
-                onChange={(e) => {
-                  const num = parseInt(e.target.value);
-                  setAmount(!isNaN(num) && num > 0 ? num : 0);
-                }}
-                placeholder="0"
-                className="w-full bg-transparent text-center text-lg text-text-primary outline-none [appearance:textfield] placeholder:text-text-tertiary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              />
-              <span className="text-lg text-text-muted">€</span>
-            </div>
-            <button
-              onClick={() => {
-                setAmount(amount + 50);
-              }}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brand-gold/60 text-text-muted transition-colors active:bg-surface-prominent"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* ── Spacer — grows 1× to slightly detach pills from fees ── */}
-        <div className="flex-1 min-h-3 max-h-6" />
-
-        {/* ── Fee breakdown + CTA — anchored at bottom ── */}
-        <div className="shrink-0">
-          <div className="rounded-2xl bg-surface-default p-4">
-            <p className="text-[15px] font-medium text-text-primary mb-3">Détail des frais</p>
-
-            {feeRows.map((row, i) => (
-              <div key={row.label}>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-[13px] text-text-muted">{row.label}</span>
-                  <span className="text-[13px] text-text-secondary">{row.value}</span>
-                </div>
-                {i < feeRows.length - 1 && (
-                  <div className="h-px bg-white/5" />
-                )}
+          {/* ── Asset zone — fills remaining space, content centered ── */}
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            {/* Vertical (default — tall screens) */}
+            <div className="flex-col items-center justify-center hidden tall:flex">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-prominent mb-3">
+                <span className="text-[13px] font-semibold text-white/90">{asset.ticker.slice(0, 2).toUpperCase()}</span>
               </div>
-            ))}
-
-            <div className="h-px bg-white/10 mt-1 mb-2" />
-            <div className="flex items-center justify-between">
-              <span className="text-[15px] font-medium text-text-primary">Coût total</span>
-              <span className="text-[15px] font-semibold text-text-primary">
-                {amount.toLocaleString("fr-FR")},00 €
-              </span>
+              <p className="text-[17px] font-medium text-text-primary">{asset.name}</p>
+              <p className="text-[12px] text-text-muted mt-0.5">{asset.subtitle}</p>
+              <p className="text-[17px] font-semibold text-text-primary mt-1.5">{asset.price}</p>
+            </div>
+            {/* Horizontal compact (short screens like iPhone SE) */}
+            <div className="flex w-full items-center gap-3 tall:hidden">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-prominent">
+                <span className="text-[10px] font-semibold text-white/90">{asset.ticker.slice(0, 2).toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-medium text-text-primary truncate">{asset.name}</p>
+                <p className="text-[11px] text-text-muted">{asset.subtitle}</p>
+              </div>
+              <p className="text-[15px] font-semibold text-text-primary shrink-0">{asset.price}</p>
             </div>
           </div>
 
-          {/* CTA */}
-          <button
-            onClick={() => onToast?.()}
-            disabled={amount <= 0}
-            className={`mt-4 w-full rounded-full py-3.5 text-[15px] font-semibold transition-all ${
-              amount > 0
-                ? "bg-brand-gold text-black active:opacity-80"
-                : "bg-surface-prominent text-text-tertiary"
-            }`}
-          >
-            Confirmer l&apos;achat
-          </button>
+          {/* ── Bottom group — amount + fees + CTA, fixed spacing between them ── */}
+          <div className="shrink-0">
+
+            {/* Amount input — inset on tall screens, full width on short */}
+            <div className="mb-5 tall:px-6">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    const next = Math.max(0, amount - 50);
+                    setAmount(next);
+                  }}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brand-gold/40 bg-black/30 text-brand-gold transition-colors active:bg-surface-prominent"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <div className="flex h-11 flex-1 items-center justify-center gap-1 rounded-xl border border-brand-gold/40 bg-black/40 px-4">
+                  <input
+                    type="number"
+                    value={amount || ""}
+                    onChange={(e) => {
+                      const num = parseInt(e.target.value);
+                      setAmount(!isNaN(num) && num > 0 ? num : 0);
+                    }}
+                    placeholder="0"
+                    inputMode="numeric"
+                    className="w-full bg-transparent text-center text-lg text-text-primary outline-none [appearance:textfield] placeholder:text-text-tertiary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <span className="text-lg text-text-muted">€</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setAmount(amount + 50);
+                  }}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brand-gold/40 bg-black/30 text-brand-gold transition-colors active:bg-surface-prominent"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Fee breakdown */}
+            <div className="rounded-2xl bg-surface-default p-4">
+              <p className="text-[15px] font-medium text-text-primary mb-3">Détail des frais</p>
+
+              {feeRows.map((row, i) => (
+                <div key={row.label}>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-[13px] text-text-muted">{row.label}</span>
+                    <span className="text-[13px] text-text-secondary">{row.value}</span>
+                  </div>
+                  {i < feeRows.length - 1 && (
+                    <div className="h-px bg-white/5" />
+                  )}
+                </div>
+              ))}
+
+              <div className="h-px bg-white/10 mt-1 mb-2" />
+              <div className="flex items-center justify-between">
+                <span className="text-[15px] font-medium text-text-primary">Coût total</span>
+                <span className="text-[15px] font-semibold text-text-primary">
+                  {amount.toLocaleString("fr-FR")},00 €
+                </span>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={() => onConfirmOrder?.(amount)}
+              disabled={amount <= 0}
+              className={`mt-5 w-full rounded-full py-3.5 text-[15px] font-semibold transition-all ${
+                amount > 0
+                  ? "bg-brand-gold text-black active:opacity-80"
+                  : "bg-surface-prominent text-text-tertiary"
+              }`}
+            >
+              Confirmer l&apos;achat
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>

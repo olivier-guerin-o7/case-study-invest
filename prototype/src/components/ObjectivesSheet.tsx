@@ -122,6 +122,7 @@ export default function ObjectivesSheet({ initial, onComplete, onClose }: Object
   const [amount, setAmount] = useState<number | null>(initial?.amount ?? null);
   const [customAmount, setCustomAmount] = useState("");
   const [showCustom, setShowCustom] = useState(false);
+  const [customFocused, setCustomFocused] = useState(false);
 
   const advance = (nextStep: number) => {
     setDirection(1);
@@ -360,7 +361,7 @@ export default function ObjectivesSheet({ initial, onComplete, onClose }: Object
                           <path d="M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                       </button>
-                      <div className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-surface-default px-4 py-3">
+                      <div className="flex h-12 flex-1 items-center justify-center gap-1 rounded-xl bg-surface-default px-4">
                         <input
                           type="number"
                           value={customAmount}
@@ -368,8 +369,17 @@ export default function ObjectivesSheet({ initial, onComplete, onClose }: Object
                             setCustomAmount(e.target.value);
                             const num = parseInt(e.target.value);
                             if (!isNaN(num) && num > 0) setAmount(num);
+                            else setAmount(null);
                           }}
-                          placeholder="0"
+                          onFocus={(e) => {
+                            setCustomFocused(true);
+                            if (e.target.value === "0") {
+                              setCustomAmount("");
+                              setAmount(null);
+                            }
+                          }}
+                          onBlur={() => setCustomFocused(false)}
+                          placeholder={customFocused ? "" : "0"}
                           className="w-full bg-transparent text-center text-lg text-text-primary outline-none [appearance:textfield] placeholder:text-text-tertiary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           autoFocus
                         />

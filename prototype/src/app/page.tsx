@@ -10,12 +10,13 @@ import type { ObjectivesData } from "@/components/ObjectivesSheet";
 import InvestScreen from "@/screens/InvestScreen";
 import AssetDetailScreen from "@/screens/AssetDetailScreen";
 import OrderScreen from "@/screens/OrderScreen";
+import OrderReviewScreen from "@/screens/OrderReviewScreen";
 
 /* ============================================
    SHARED APP CONTENT
    ============================================ */
 
-type Screen = "invest" | "assetDetail" | "orderScreen";
+type Screen = "invest" | "assetDetail" | "orderScreen" | "orderReview";
 
 function AppContent({
   objectives,
@@ -31,6 +32,10 @@ function AppContent({
   onBack,
   onBuy,
   onBackFromOrder,
+  onConfirmOrder,
+  onBackFromReview,
+  onExecuteOrder,
+  orderAmount,
   onToast,
   toast,
 }: {
@@ -47,27 +52,35 @@ function AppContent({
   onBack: () => void;
   onBuy: (ticker: string) => void;
   onBackFromOrder: () => void;
+  onConfirmOrder: (amount: number) => void;
+  onBackFromReview: () => void;
+  onExecuteOrder: () => void;
+  orderAmount: number;
   onToast: (msg?: string) => void;
   toast: string | null;
 }) {
   /* Shared drag values for iOS-style side-by-side swipe-back */
   const detailDragX = useMotionValue(0);
   const orderDragX = useMotionValue(0);
+  const reviewDragX = useMotionValue(0);
   // Invest screen sits to the LEFT of detail — slides in side-by-side
   const investX = useTransform(detailDragX, (v) => `calc(-100% + ${v}px)`);
+  // Opacity ramps from 0.5 → 1 as user swipes back (0 → 393px drag)
+  const investOpacity = useTransform(detailDragX, [0, 393], [0.5, 1]);
 
   // Reset dragX after render removes the style binding
   useEffect(() => {
     if (activeScreen === "invest") detailDragX.set(0);
-    if (activeScreen !== "orderScreen") orderDragX.set(0);
-  }, [activeScreen, detailDragX, orderDragX]);
+    if (activeScreen !== "orderScreen" && activeScreen !== "orderReview") orderDragX.set(0);
+    if (activeScreen !== "orderReview") reviewDragX.set(0);
+  }, [activeScreen, detailDragX, orderDragX, reviewDragX]);
 
   return (
     <>
-      {/* Ambient glow — dual blue/gold gradient (taller on order screen) */}
+      {/* Ambient glow — dual blue/gold gradient (varies per screen) */}
       <div
         className={`absolute inset-x-0 top-0 z-0 pointer-events-none transition-[height] duration-300 ${
-          activeScreen === "orderScreen" ? "h-[700px]" : "h-64"
+          activeScreen === "orderScreen" ? "h-[700px]" : activeScreen === "orderReview" ? "h-[500px]" : "h-64"
         }`}
         style={{
           background: activeScreen === "orderScreen"
@@ -78,6 +91,15 @@ function AppContent({
                 "radial-gradient(ellipse 100% 90% at 90% 2%, rgba(255, 200, 80, 0.12) 0%, transparent 60%)",
                 "radial-gradient(ellipse 90% 80% at 92% 10%, rgba(255, 185, 60, 0.08) 0%, transparent 55%)",
                 "radial-gradient(ellipse 80% 70% at 65% 8%, rgba(120, 90, 230, 0.08) 0%, transparent 60%)",
+              ].join(", ")
+            : activeScreen === "orderReview"
+            ? [
+                "radial-gradient(ellipse 140% 120% at 55% 2%, rgba(70, 120, 255, 0.08) 0%, transparent 65%)",
+                "radial-gradient(ellipse 120% 110% at 70% 0%, rgba(100, 70, 240, 0.06) 0%, transparent 65%)",
+                "radial-gradient(ellipse 130% 110% at 85% 4%, rgba(140, 70, 210, 0.08) 0%, transparent 60%)",
+                "radial-gradient(ellipse 100% 90% at 90% 2%, rgba(255, 200, 80, 0.06) 0%, transparent 60%)",
+                "radial-gradient(ellipse 90% 80% at 92% 10%, rgba(255, 185, 60, 0.04) 0%, transparent 55%)",
+                "radial-gradient(ellipse 80% 70% at 65% 8%, rgba(120, 90, 230, 0.04) 0%, transparent 60%)",
               ].join(", ")
             : [
                 "radial-gradient(ellipse 80% 70% at 35% -5%, rgba(86, 130, 242, 0.35) 0%, transparent 60%)",
@@ -100,7 +122,7 @@ function AppContent({
           className="absolute inset-0 flex flex-col"
           style={
             activeScreen !== "invest"
-              ? { x: investX }
+              ? { x: investX, opacity: investOpacity }
               : undefined
           }
           animate={
@@ -130,15 +152,15 @@ function AppContent({
           </div>
         </motion.div>
 
-        {/* Asset detail screen — stays mounted when order is open */}
+        {/* Asset detail screen — stays mounted when order or review is open */}
         <AnimatePresence initial={false}>
-          {(activeScreen === "assetDetail" || activeScreen === "orderScreen") && selectedAsset && (
+          {(activeScreen === "assetDetail" || activeScreen === "orderScreen" || activeScreen === "orderReview") && selectedAsset && (
             <motion.div
               key="assetDetail"
               className="absolute inset-0 overflow-hidden"
               initial={{ x: "100%" }}
               animate={
-                activeScreen === "orderScreen"
+                activeScreen !== "assetDetail"
                   ? { x: "-100%", opacity: 0.5 }
                   : { x: 0, opacity: 1 }
               }
@@ -157,14 +179,18 @@ function AppContent({
           )}
         </AnimatePresence>
 
-        {/* Order screen — slides in from right, side-by-side with detail */}
+        {/* Order screen — stays mounted when review is open */}
         <AnimatePresence initial={false}>
-          {activeScreen === "orderScreen" && selectedAsset && (
+          {(activeScreen === "orderScreen" || activeScreen === "orderReview") && selectedAsset && (
             <motion.div
               key="orderScreen"
               className="absolute inset-0 overflow-hidden"
               initial={{ x: "100%" }}
-              animate={{ x: 0 }}
+              animate={
+                activeScreen === "orderReview"
+                  ? { x: "-100%", opacity: 0.5 }
+                  : { x: 0, opacity: 1 }
+              }
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
             >
@@ -175,6 +201,30 @@ function AppContent({
                 sharedDragX={orderDragX}
                 onToast={onToast}
                 objectives={objectives}
+                onConfirmOrder={onConfirmOrder}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Order review screen — MiFID legal step */}
+        <AnimatePresence initial={false}>
+          {activeScreen === "orderReview" && selectedAsset && (
+            <motion.div
+              key="orderReview"
+              className="absolute inset-0 overflow-hidden"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+            >
+              <OrderReviewScreen
+                ticker={selectedAsset}
+                amount={orderAmount}
+                onBack={onBackFromReview}
+                onConfirm={onExecuteOrder}
+                isTouch={isTouch}
+                sharedDragX={reviewDragX}
               />
             </motion.div>
           )}
@@ -287,6 +337,12 @@ export default function Home() {
     setActiveScreen("orderScreen");
   }, []);
   const handleBackFromOrder = useCallback(() => setActiveScreen("assetDetail"), []);
+  const [orderAmount, setOrderAmount] = useState(1000);
+  const handleConfirmOrder = useCallback((amount: number) => {
+    setOrderAmount(amount);
+    setActiveScreen("orderReview");
+  }, []);
+  const handleBackFromReview = useCallback(() => setActiveScreen("orderScreen"), []);
 
   /* Toast */
   const [toast, setToast] = useState<string | null>(null);
@@ -296,6 +352,11 @@ export default function Home() {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 1500);
   }, []);
+
+  const handleExecuteOrder = useCallback(() => {
+    // TODO: transition to post-trade confirmation
+    handleToast("Ordre exécuté !");
+  }, [handleToast]);
 
   /* ── Mobile: fullscreen, no frame ── */
   if (isTouch) {
@@ -315,6 +376,10 @@ export default function Home() {
           onBack={handleBack}
           onBuy={handleBuy}
           onBackFromOrder={handleBackFromOrder}
+          onConfirmOrder={handleConfirmOrder}
+          onBackFromReview={handleBackFromReview}
+          onExecuteOrder={handleExecuteOrder}
+          orderAmount={orderAmount}
           onToast={handleToast}
           toast={toast}
         />
@@ -498,6 +563,10 @@ export default function Home() {
           onBack={handleBack}
           onBuy={handleBuy}
           onBackFromOrder={handleBackFromOrder}
+          onConfirmOrder={handleConfirmOrder}
+          onBackFromReview={handleBackFromReview}
+          onExecuteOrder={handleExecuteOrder}
+          orderAmount={orderAmount}
           onToast={handleToast}
           toast={toast}
         />

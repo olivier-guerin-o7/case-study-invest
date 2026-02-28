@@ -4,11 +4,21 @@ import { motion } from "framer-motion";
 import type { ObjectivesData } from "./ObjectivesSheet";
 
 const goalLabels: Record<ObjectivesData["goal"], string> = {
-  croissance: "Croissance long terme",
+  croissance: "Croissance",
   retraite: "Retraite",
-  revenus: "Revenus passifs",
+  revenus: "Revenus",
   "court-terme": "Court terme",
 };
+
+const riskLabels: Record<ObjectivesData["risk"], string> = {
+  prudent: "Prudent",
+  equilibre: "Équilibré",
+  dynamique: "Dynamique",
+};
+
+function formatAmount(n: number) {
+  return n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k` : `${n}`;
+}
 
 interface ObjectivesIndicatorProps {
   objectives: ObjectivesData;
@@ -19,7 +29,7 @@ export default function ObjectivesIndicator({ objectives, onEdit }: ObjectivesIn
   return (
     <button
       onClick={onEdit}
-      className="flex w-full items-center gap-3 rounded-card-lg bg-surface-subtle px-4 py-3 text-left transition-colors active:bg-surface-default"
+      className="flex w-full items-center gap-1.5 rounded-card-lg bg-surface-subtle px-4 py-3 text-left transition-colors active:bg-surface-default"
     >
       {/* Target icon — scales down on mount after sheet closes */}
       <motion.div
@@ -38,10 +48,14 @@ export default function ObjectivesIndicator({ objectives, onEdit }: ObjectivesIn
         </svg>
       </motion.div>
 
-      {/* Label */}
-      <p className="flex-1 text-[13px] font-medium text-text-muted">
-        Objectif : <span className="text-text-secondary">{goalLabels[objectives.goal]}</span>
-      </p>
+      {/* Label + summary */}
+      <div className="flex-1 min-w-0">
+        <p className="truncate text-[13px] font-medium text-text-muted">
+          Objectif<span className="inline-block w-2" /><span className="text-text-secondary">
+            {goalLabels[objectives.goal]} · {riskLabels[objectives.risk]} · {formatAmount(objectives.amount)}&nbsp;€
+          </span>
+        </p>
+      </div>
 
       {/* Edit chevron */}
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0 text-text-tertiary">

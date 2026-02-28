@@ -129,6 +129,9 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 34px);
 }
 
+/* === Height breakpoint for short screens (iPhone SE etc.) === */
+@custom-variant tall (@media (min-height: 700px));
+
 /* === Scrollbar hidden (mobile feel) === */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
