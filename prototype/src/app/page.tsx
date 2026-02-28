@@ -12,6 +12,7 @@ import AssetDetailScreen from "@/screens/AssetDetailScreen";
 import OrderScreen from "@/screens/OrderScreen";
 import OrderReviewScreen from "@/screens/OrderReviewScreen";
 import PostTradeScreen from "@/screens/PostTradeScreen";
+import DashboardScreen from "@/screens/DashboardScreen";
 
 /* ============================================
    AMBIENT GLOW SYSTEM — 3 intensity tiers
@@ -74,6 +75,8 @@ function AppContent({
   onComplete,
   onCloseSheet,
   isTouch,
+  activeTab,
+  onTabChange,
   activeScreen,
   selectedAsset,
   onSelectAsset,
@@ -86,6 +89,7 @@ function AppContent({
   onDonePostTrade,
   dismissing,
   orderAmount,
+  hasCompletedTrade,
   onToast,
   toast,
 }: {
@@ -96,6 +100,8 @@ function AppContent({
   onComplete: (data: ObjectivesData) => void;
   onCloseSheet: () => void;
   isTouch: boolean;
+  activeTab: "synthese" | "investir";
+  onTabChange: (tab: "synthese" | "investir") => void;
   activeScreen: Screen;
   selectedAsset: string | null;
   onSelectAsset: (ticker: string) => void;
@@ -108,6 +114,7 @@ function AppContent({
   onDonePostTrade: () => void;
   dismissing: boolean;
   orderAmount: number;
+  hasCompletedTrade: boolean;
   onToast: (msg?: string) => void;
   toast: string | null;
 }) {
@@ -145,7 +152,8 @@ function AppContent({
     <>
       {/* Ambient glow — 3-tier system (low / medium / high) per screen */}
       {(() => {
-        const glow = GLOW[SCREEN_GLOW[activeScreen]];
+        const glowLevel = activeTab === "synthese" ? "low" : SCREEN_GLOW[activeScreen];
+        const glow = GLOW[glowLevel];
         return (
           <div
             className={`absolute inset-x-0 top-0 z-0 pointer-events-none transition-[height] duration-300 ${glow.height}`}
@@ -163,132 +171,152 @@ function AppContent({
 
       {/* Screen content with iOS push/pop transitions */}
       <div className="relative z-10 flex-1 min-h-0 overflow-hidden select-none">
-        {/* Invest screen — always mounted, slides side-by-side with detail */}
-        <motion.div
-          className="absolute inset-0 flex flex-col"
-          style={
-            activeScreen !== "invest" || dismissing
-              ? { x: investX, opacity: investOpacity }
-              : undefined
-          }
-          animate={
-            activeScreen === "invest" && !dismissing
-              ? { x: 0, opacity: 1 }
-              : { x: "-100%", opacity: 0.5 }
-          }
-          transition={
-            activeScreen === "invest"
-              ? { type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }
-              : { type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }
-          }
-        >
-          {/* TopBar slides with invest screen — no pop-in on back */}
-          <div className="shrink-0">
-            <TopBar onToast={onToast} />
-          </div>
-          <div className="flex-1 min-h-0">
-            <InvestScreen
-              objectives={objectives}
-              objectivesRevision={objectivesRevision}
-              onOpenSheet={onOpenSheet}
-              onSelectAsset={onSelectAsset}
-              isTouch={isTouch}
-              onToast={onToast}
-            />
-          </div>
-        </motion.div>
 
-        {/* Asset detail screen — stays mounted when deeper screens are open, or during dismiss */}
-        <AnimatePresence initial={false}>
-          {(activeScreen === "assetDetail" || activeScreen === "orderScreen" || activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
-            <motion.div
-              key="assetDetail"
-              className="absolute inset-0 overflow-hidden"
-              initial={{ x: "100%" }}
-              animate={
-                dismissing
-                  ? { x: "-100%", opacity: 0 }
-                  : activeScreen !== "assetDetail"
-                    ? { x: "-100%", opacity: 0.5 }
-                    : { x: 0, opacity: 1 }
-              }
-              exit={{ x: "100%", opacity: 1, transition: { duration: 0 } }}
-              transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-            >
-              <AssetDetailScreen
-                ticker={selectedAsset}
-                onBack={onBack}
-                isTouch={isTouch}
-                sharedDragX={detailDragX}
-                onToast={onToast}
-                onBuy={onBuy}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Order screen — stays mounted when deeper screens are open, or during dismiss */}
-        <AnimatePresence initial={false}>
-          {(activeScreen === "orderScreen" || activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
-            <motion.div
-              key="orderScreen"
-              className="absolute inset-0 overflow-hidden"
-              initial={{ x: "100%" }}
-              animate={
-                dismissing
-                  ? { x: "-100%", opacity: 0 }
-                  : activeScreen === "orderReview" || activeScreen === "postTrade"
-                    ? { x: "-100%", opacity: 0.5 }
-                    : { x: 0, opacity: 1 }
-              }
-              exit={{ x: "-100%", transition: { duration: 0 } }}
-              transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-            >
-              <OrderScreen
-                ticker={selectedAsset}
-                onBack={onBackFromOrder}
-                isTouch={isTouch}
-                sharedDragX={orderDragX}
-                onToast={onToast}
+        {/* Dashboard screen — visible when synthese tab active */}
+        {activeTab === "synthese" && (
+          <div className="absolute inset-0 flex flex-col">
+            <div className="shrink-0">
+              <TopBar onToast={onToast} />
+            </div>
+            <div className="flex-1 min-h-0">
+              <DashboardScreen
                 objectives={objectives}
-                onConfirmOrder={onConfirmOrder}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Order review screen — stays mounted when postTrade is open, or during dismiss */}
-        <AnimatePresence initial={false}>
-          {(activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
-            <motion.div
-              key="orderReview"
-              className="absolute inset-0 overflow-hidden"
-              initial={{ x: "100%" }}
-              animate={
-                dismissing
-                  ? { x: "-100%", opacity: 0 }
-                  : activeScreen === "postTrade"
-                    ? { x: "-100%", opacity: 0.5 }
-                    : { x: 0, opacity: 1 }
-              }
-              exit={{ x: "-100%", transition: { duration: 0 } }}
-              transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-            >
-              <OrderReviewScreen
-                ticker={selectedAsset}
-                amount={orderAmount}
-                onBack={onBackFromReview}
-                onConfirm={onExecuteOrder}
+                objectivesRevision={objectivesRevision}
+                onOpenSheet={onOpenSheet}
                 isTouch={isTouch}
-                sharedDragX={reviewDragX}
+                onToast={onToast}
+                onNavigateToInvest={() => onTabChange("investir")}
+                hasCompletedTrade={hasCompletedTrade}
+                tradeAmount={orderAmount}
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
 
-        {/* Post-trade confirmation */}
-        <AnimatePresence initial={false}>
-          {(activeScreen === "postTrade" || dismissing) && selectedAsset && (
+        {/* Invest flow — all screens hidden when on synthese tab */}
+        <div className="absolute inset-0" style={activeTab !== "investir" ? { display: "none" } : undefined}>
+          {/* Invest screen — always mounted, slides side-by-side with detail */}
+          <motion.div
+            className="absolute inset-0 flex flex-col"
+            style={
+              activeScreen !== "invest" || dismissing
+                ? { x: investX, opacity: investOpacity }
+                : undefined
+            }
+            animate={
+              activeScreen === "invest" && !dismissing
+                ? { x: 0, opacity: 1 }
+                : { x: "-100%", opacity: 0.5 }
+            }
+            transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+          >
+            {/* TopBar slides with invest screen — no pop-in on back */}
+            <div className="shrink-0">
+              <TopBar onToast={onToast} />
+            </div>
+            <div className="flex-1 min-h-0">
+              <InvestScreen
+                objectives={objectives}
+                objectivesRevision={objectivesRevision}
+                onOpenSheet={onOpenSheet}
+                onSelectAsset={onSelectAsset}
+                isTouch={isTouch}
+                onToast={onToast}
+              />
+            </div>
+          </motion.div>
+
+          {/* Asset detail screen — stays mounted when deeper screens are open, or during dismiss */}
+          <AnimatePresence initial={false}>
+            {(activeScreen === "assetDetail" || activeScreen === "orderScreen" || activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
+              <motion.div
+                key="assetDetail"
+                className="absolute inset-0 overflow-hidden"
+                initial={{ x: "100%" }}
+                animate={
+                  dismissing
+                    ? { x: "-100%", opacity: 0 }
+                    : activeScreen !== "assetDetail"
+                      ? { x: "-100%", opacity: 0.5 }
+                      : { x: 0, opacity: 1 }
+                }
+                exit={{ x: "100%", opacity: 1, transition: { duration: 0 } }}
+                transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+              >
+                <AssetDetailScreen
+                  ticker={selectedAsset}
+                  onBack={onBack}
+                  isTouch={isTouch}
+                  sharedDragX={detailDragX}
+                  onToast={onToast}
+                  onBuy={onBuy}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Order screen — stays mounted when deeper screens are open, or during dismiss */}
+          <AnimatePresence initial={false}>
+            {(activeScreen === "orderScreen" || activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
+              <motion.div
+                key="orderScreen"
+                className="absolute inset-0 overflow-hidden"
+                initial={{ x: "100%" }}
+                animate={
+                  dismissing
+                    ? { x: "-100%", opacity: 0 }
+                    : activeScreen === "orderReview" || activeScreen === "postTrade"
+                      ? { x: "-100%", opacity: 0.5 }
+                      : { x: 0, opacity: 1 }
+                }
+                exit={{ x: "-100%", transition: { duration: 0 } }}
+                transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+              >
+                <OrderScreen
+                  ticker={selectedAsset}
+                  onBack={onBackFromOrder}
+                  isTouch={isTouch}
+                  sharedDragX={orderDragX}
+                  onToast={onToast}
+                  objectives={objectives}
+                  onConfirmOrder={onConfirmOrder}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Order review screen — stays mounted when postTrade is open, or during dismiss */}
+          <AnimatePresence initial={false}>
+            {(activeScreen === "orderReview" || activeScreen === "postTrade" || dismissing) && selectedAsset && (
+              <motion.div
+                key="orderReview"
+                className="absolute inset-0 overflow-hidden"
+                initial={{ x: "100%" }}
+                animate={
+                  dismissing
+                    ? { x: "-100%", opacity: 0 }
+                    : activeScreen === "postTrade"
+                      ? { x: "-100%", opacity: 0.5 }
+                      : { x: 0, opacity: 1 }
+                }
+                exit={{ x: "-100%", transition: { duration: 0 } }}
+                transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+              >
+                <OrderReviewScreen
+                  ticker={selectedAsset}
+                  amount={orderAmount}
+                  onBack={onBackFromReview}
+                  onConfirm={onExecuteOrder}
+                  isTouch={isTouch}
+                  sharedDragX={reviewDragX}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Post-trade confirmation */}
+          <AnimatePresence initial={false}>
+            {(activeScreen === "postTrade" || dismissing) && selectedAsset && (
             <motion.div
               key="postTrade"
               className="absolute inset-0 overflow-hidden"
@@ -313,7 +341,8 @@ function AppContent({
               />
             </motion.div>
           )}
-        </AnimatePresence>
+          </AnimatePresence>
+        </div>{/* end invest flow wrapper */}
       </div>
 
       {/* Toast */}
@@ -335,7 +364,14 @@ function AppContent({
       </AnimatePresence>
 
       {/* Bottom tab bar */}
-      <BottomTabBar activeTab="investir" onTabPress={(id) => { if (id !== "investir") onToast(); }} />
+      <BottomTabBar
+        activeTab={activeTab}
+        onTabPress={(id) => {
+          if (id === "synthese") onTabChange("synthese");
+          else if (id === "investir") onTabChange("investir");
+          else onToast();
+        }}
+      />
 
       {/* Objectives bottom sheet */}
       <AnimatePresence>
@@ -359,8 +395,10 @@ export default function Home() {
   const [objectives, setObjectives] = useState<ObjectivesData | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [objectivesRevision, setObjectivesRevision] = useState(0);
+  const [activeTab, setActiveTab] = useState<"synthese" | "investir">("synthese");
   const [activeScreen, setActiveScreen] = useState<Screen>("invest");
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
+  const [hasCompletedTrade, setHasCompletedTrade] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [zoom, setZoom] = useState(1);
@@ -445,6 +483,7 @@ export default function Home() {
   const handleDonePostTrade = useCallback(() => {
     setDismissing(true);
     setActiveScreen("invest");
+    setHasCompletedTrade(true);
     // Delay unmount so exit animations play (300ms transition)
     setTimeout(() => {
       setSelectedAsset(null);
@@ -464,6 +503,8 @@ export default function Home() {
           onComplete={handleComplete}
           onCloseSheet={handleCloseSheet}
           isTouch={isTouch}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           activeScreen={activeScreen}
           selectedAsset={selectedAsset}
           onSelectAsset={handleSelectAsset}
@@ -476,6 +517,7 @@ export default function Home() {
           onDonePostTrade={handleDonePostTrade}
           dismissing={dismissing}
           orderAmount={orderAmount}
+          hasCompletedTrade={hasCompletedTrade}
           onToast={handleToast}
           toast={toast}
         />
@@ -503,6 +545,8 @@ export default function Home() {
             setSheetOpen(false);
             setActiveScreen("invest");
             setSelectedAsset(null);
+            setActiveTab("synthese");
+            setHasCompletedTrade(false);
           }}
           className={btnCls}
         >
@@ -653,6 +697,8 @@ export default function Home() {
           onComplete={handleComplete}
           onCloseSheet={handleCloseSheet}
           isTouch={false}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           activeScreen={activeScreen}
           selectedAsset={selectedAsset}
           onSelectAsset={handleSelectAsset}
@@ -665,6 +711,7 @@ export default function Home() {
           onDonePostTrade={handleDonePostTrade}
           dismissing={dismissing}
           orderAmount={orderAmount}
+          hasCompletedTrade={hasCompletedTrade}
           onToast={handleToast}
           toast={toast}
         />
