@@ -441,9 +441,9 @@ export default function Home() {
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!cursorRef.current || !frameRef.current) return;
     const rect = frameRef.current.getBoundingClientRect();
-    cursorRef.current.style.left = `${e.clientX - rect.left}px`;
-    cursorRef.current.style.top = `${e.clientY - rect.top}px`;
-  }, []);
+    cursorRef.current.style.left = `${(e.clientX - rect.left) / zoom}px`;
+    cursorRef.current.style.top = `${(e.clientY - rect.top) / zoom}px`;
+  }, [zoom]);
 
   const handleComplete = useCallback((data: ObjectivesData) => {
     setObjectives(data);
