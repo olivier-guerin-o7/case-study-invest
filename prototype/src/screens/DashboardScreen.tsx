@@ -287,7 +287,11 @@ export default function DashboardScreen({
           2. OBJECTIVES INDICATOR (only if set — no nudge card)
           ══════════════════════════════════════════ */}
       {objectives && (
-        <motion.div variants={fadeUp} className="-mt-3">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }}
+          className="-mt-3"
+        >
           <ObjectivesIndicator key={objectivesRevision} objectives={objectives} onEdit={() => onOpenSheet()} />
         </motion.div>
       )}

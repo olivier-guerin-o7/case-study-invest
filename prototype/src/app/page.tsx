@@ -639,36 +639,75 @@ export default function Home() {
         );
       })()}
 
-      {/* QR code overlay */}
+      {/* QR code modal */}
       <AnimatePresence>
         {showQR && (
           <>
-            {/* Dismiss backdrop */}
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowQR(false)}
             />
+            {/* Dialog */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.15 }}
-              className="fixed left-6 top-[7.5rem] z-50 flex flex-col items-center gap-3 rounded-2xl bg-white p-4 shadow-2xl"
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrUrl)}&bgcolor=ffffff&color=000000&margin=0`}
-                alt="QR Code"
-                width={160}
-                height={160}
-                className="rounded-lg"
-              />
-              <p className="max-w-[160px] text-center text-[10px] leading-tight text-black/50">
-                Ouvrir sur mobile
-              </p>
+              <div className="relative pointer-events-auto w-[340px] rounded-2xl bg-[#1C1C1E] p-6 shadow-2xl">
+                {/* Close button */}
+                <button
+                  onClick={() => setShowQR(false)}
+                  className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/15 hover:text-white/90 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 1l12 12M13 1L1 13"/></svg>
+                </button>
+
+                {/* Title */}
+                <h2 className="text-[17px] font-semibold text-white/90 mb-5">Ouvrir sur iPhone</h2>
+
+                {/* QR code */}
+                <div className="flex flex-col items-center gap-2 mb-5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}&bgcolor=ffffff&color=000000&margin=0`}
+                    alt="QR Code"
+                    width={180}
+                    height={180}
+                    className="rounded-xl"
+                  />
+                  <p className="text-[11px] text-white/30 font-mono">{qrUrl}</p>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-white/10 mb-4" />
+
+                {/* Instructions */}
+                <p className="text-[13px] font-medium text-white/60 mb-3">Pour une expérience plein écran :</p>
+                <ol className="space-y-2 text-[12px] text-white/45 leading-relaxed">
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 text-white/25">1.</span>
+                    <span>Scanner le QR code avec l&apos;appareil photo</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 text-white/25">2.</span>
+                    <span>Appuyer sur <span className="inline-flex align-text-bottom mx-0.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/60"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> Partager dans Safari</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 text-white/25">3.</span>
+                    <span>Choisir « Sur l&apos;écran d&apos;accueil »</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 text-white/25">4.</span>
+                    <span>Ouvrir l&apos;app depuis le raccourci sur l&apos;écran d&apos;accueil</span>
+                  </li>
+                </ol>
+              </div>
             </motion.div>
           </>
         )}

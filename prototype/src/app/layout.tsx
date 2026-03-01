@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: "Finary",
     statusBarStyle: "black-translucent",
   },
-  manifest: "/manifest.json",
+  manifest: "/Finary/manifest.json",
 };
 
 export const viewport: Viewport = {
