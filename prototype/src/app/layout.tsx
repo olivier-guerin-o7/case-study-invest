@@ -7,11 +7,11 @@ import "@fontsource/inter/700.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Finary — First Investment Experience",
-  description: "Case study prototype: brokerage account onboarding & first trade",
+  title: "First Investment Experience — Case Study",
+  description: "Interactive prototype: first investment experience in a personal finance app",
   appleWebApp: {
     capable: true,
-    title: "Finary",
+    title: "Invest",
     statusBarStyle: "black-translucent",
   },
   manifest: "/case-study-invest/manifest.json",

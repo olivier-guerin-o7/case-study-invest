@@ -586,7 +586,7 @@ function InsightsTab({
         key: "performance",
         tag: "Comparaison",
         title: "Performance vs profils similaires",
-        body: "Votre portefeuille surperforme 68% des profils similaires sur Finary. Bon début.",
+        body: "Votre portefeuille surperforme 68% des profils similaires sur la plateforme. Bon début.",
         action: () => onToast(),
       });
       result.push({
@@ -600,7 +600,7 @@ function InsightsTab({
         key: "fees",
         tag: "Optimisation",
         title: "Optimisation des frais",
-        body: "En passant par Finary Brokerage, vous économisez jusqu'à 45 €/an en frais de transaction.",
+        body: "En passant par Invest Brokerage, vous économisez jusqu'à 45 €/an en frais de transaction.",
         action: () => onToast(),
       });
     } else {
@@ -629,7 +629,7 @@ function InsightsTab({
         key: "fees",
         tag: "Optimisation",
         title: "Optimisation des frais",
-        body: "En passant par Finary Brokerage, vous économisez jusqu'à 45 €/an en frais de transaction.",
+        body: "En passant par Invest Brokerage, vous économisez jusqu'à 45 €/an en frais de transaction.",
         action: () => onToast(),
       });
     }

@@ -1092,7 +1092,7 @@ export default function AssetDetailScreen({ ticker, onBack, isTouch = false, sha
             <path d="M2 14c0-2.5 2.5-4 6-4s6 1.5 6 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
           <p className="text-[11px] text-text-muted">
-            {asset.investorCount} investisseurs Finary suivent cet actif
+            {asset.investorCount} investisseurs suivent cet actif
           </p>
         </motion.div>
 

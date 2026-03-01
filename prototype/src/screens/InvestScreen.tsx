@@ -267,10 +267,10 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
         </div>
       </motion.section>
 
-      {/* ── "Sélection" content: Tendances Finary ── */}
+      {/* ── "Sélection" content: Tendances ── */}
       <motion.section variants={fadeUp}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-text-primary">Tendances Finary</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Tendances</h2>
           <button onClick={() => onToast?.()} className="pr-1 text-xs font-medium text-text-muted transition-colors active:text-text-secondary">
             Tout voir
           </button>
@@ -329,7 +329,7 @@ export default function InvestScreen({ objectives = null, objectivesRevision = 0
           vos investissements ?
         </p>
         <button onClick={() => onToast?.()} className="rounded-full bg-brand-gold px-6 py-3 text-[15px] font-semibold text-black transition-opacity active:opacity-80">
-          Découvrir Finary+
+          Découvrir Premium
         </button>
       </motion.div>
     </motion.div>

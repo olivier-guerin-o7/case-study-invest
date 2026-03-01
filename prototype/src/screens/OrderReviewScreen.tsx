@@ -252,7 +252,7 @@ export default function OrderReviewScreen({
           <p className="text-[13px] text-white/70 leading-relaxed">
             J&apos;ai lu le <ClarityTerm>Document d&apos;informations clés</ClarityTerm> et
             je comprends les risques associés à cet investissement. J&apos;accepte les{" "}
-            <ClarityTerm>conditions générales</ClarityTerm> de Finary Brokerage.
+            <ClarityTerm>conditions générales</ClarityTerm> de Invest Brokerage.
           </p>
         </div>
 

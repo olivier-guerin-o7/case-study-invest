@@ -77,7 +77,7 @@ body {
   background: var(--color-bg-primary);
 }
 
-/* === Finary Gradient === */
+/* === Brand Gradient === */
 .gradient-brand {
   background: linear-gradient(116deg, #5682F2 -36.05%, #F9D09F 100.05%);
 }
