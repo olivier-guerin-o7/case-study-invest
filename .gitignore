@@ -10,6 +10,5 @@
 # MCP config (local dev only)
 .mcp.json
 
-# Reference screenshots (local working files only)
-Reference/Finary-ios-app-screenshots/
-Reference/Finary other screenshots from web/
+# Reference material (local only — not needed for deployment)
+Reference/

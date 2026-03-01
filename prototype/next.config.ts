@@ -5,7 +5,7 @@ const isProd = process.env.NODE_ENV === "production";
 const nextConfig: NextConfig = {
   devIndicators: false,
   output: "export",
-  basePath: isProd ? "/Finary" : "",
+  basePath: isProd ? "/case-study-invest" : "",
   trailingSlash: true,
 };
 
