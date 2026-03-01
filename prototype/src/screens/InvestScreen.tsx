@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import Sparkline from "@/components/Sparkline";
 import ObjectivesIndicator from "@/components/ObjectivesIndicator";
@@ -50,6 +50,7 @@ interface InvestScreenProps {
   onSelectAsset?: (ticker: string) => void;
   isTouch?: boolean;
   onToast?: (msg?: string) => void;
+  scrollKey?: number;
 }
 
 /* ============================================
@@ -123,13 +124,22 @@ const fadeUp = {
    COMPONENT
    ============================================ */
 
-export default function InvestScreen({ objectives = null, objectivesRevision = 0, onOpenSheet, onSelectAsset, isTouch = false, onToast }: InvestScreenProps) {
+export default function InvestScreen({ objectives = null, objectivesRevision = 0, onOpenSheet, onSelectAsset, isTouch = false, onToast, scrollKey = 0 }: InvestScreenProps) {
   const dragScrollX = useDragScroll("x");
   const dragScrollY = useDragScroll("y");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Reset scroll position when returning to this screen
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [scrollKey]);
 
   return (
     <motion.div
-      ref={!isTouch ? dragScrollY.ref : undefined}
+      ref={(el: HTMLDivElement | null) => {
+        (scrollRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        if (!isTouch) (dragScrollY.ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      }}
       onMouseDown={!isTouch ? dragScrollY.onMouseDown : undefined}
       onMouseUp={!isTouch ? dragScrollY.onMouseUp : undefined}
       onMouseLeave={!isTouch ? dragScrollY.onMouseLeave : undefined}

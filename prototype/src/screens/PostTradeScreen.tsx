@@ -399,7 +399,7 @@ export default function PostTradeScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: objectiveLabel ? 1.3 : 1.15 }}
         >
-          Retour à Investir
+          Retourner à vos investissements
         </motion.button>
       </div>
     </motion.div>

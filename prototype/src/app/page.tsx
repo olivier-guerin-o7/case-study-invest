@@ -87,6 +87,7 @@ function AppContent({
   onBackFromReview,
   onExecuteOrder,
   onDonePostTrade,
+  investScrollKey,
   dismissing,
   orderAmount,
   hasCompletedTrade,
@@ -113,6 +114,7 @@ function AppContent({
   onBackFromReview: () => void;
   onExecuteOrder: () => void;
   onDonePostTrade: () => void;
+  investScrollKey: number;
   dismissing: boolean;
   orderAmount: number;
   hasCompletedTrade: boolean;
@@ -225,6 +227,7 @@ function AppContent({
                 onSelectAsset={onSelectAsset}
                 isTouch={isTouch}
                 onToast={onToast}
+                scrollKey={investScrollKey}
               />
             </div>
           </motion.div>
@@ -484,10 +487,12 @@ export default function Home() {
     setActiveScreen("postTrade");
   }, []);
   const [dismissing, setDismissing] = useState(false);
+  const [investScrollKey, setInvestScrollKey] = useState(0);
   const handleDonePostTrade = useCallback(() => {
     setDismissing(true);
     setActiveScreen("invest");
     setHasCompletedTrade(true);
+    setInvestScrollKey((k) => k + 1);
     // Delay unmount so exit animations play (300ms transition)
     setTimeout(() => {
       setSelectedAsset(null);
@@ -519,6 +524,7 @@ export default function Home() {
           onBackFromReview={handleBackFromReview}
           onExecuteOrder={handleExecuteOrder}
           onDonePostTrade={handleDonePostTrade}
+          investScrollKey={investScrollKey}
           dismissing={dismissing}
           orderAmount={orderAmount}
           hasCompletedTrade={hasCompletedTrade}
@@ -713,12 +719,17 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* iPhone 15 Pro frame */}
+      {/* iPhone 15 Pro frame — wrapper sizes to scaled dimensions so flexbox centers correctly */}
+      <div
+        className="flex items-center justify-center transition-[height] duration-200 ease-out"
+        style={{ height: 852 * zoom }}
+      >
       <div
         ref={frameRef}
         className="phone-frame flex flex-col rounded-[44px] border border-white/25 overflow-hidden cursor-none transition-transform duration-200 ease-out"
         style={{
           transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+          transformOrigin: "center center",
           boxShadow: "0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 8px rgba(0, 0, 0, 0.2)",
         }}
         onMouseMove={handleMouseMove}
@@ -754,6 +765,7 @@ export default function Home() {
           onBackFromReview={handleBackFromReview}
           onExecuteOrder={handleExecuteOrder}
           onDonePostTrade={handleDonePostTrade}
+          investScrollKey={investScrollKey}
           dismissing={dismissing}
           orderAmount={orderAmount}
           hasCompletedTrade={hasCompletedTrade}
@@ -761,6 +773,7 @@ export default function Home() {
           onToast={handleToast}
           toast={toast}
         />
+      </div>
       </div>
     </div>
   );
