@@ -12,3 +12,15 @@
 
 # Reference material (local only — not needed for deployment)
 Reference/
+
+# Project docs (local only)
+Archive/
+CLAUDE.md
+prototype/CLAUDE.md
+Project Constitution.md
+Presentation.md
+*.md
+!prototype/README.md
+
+# Build artifacts
+.next/
